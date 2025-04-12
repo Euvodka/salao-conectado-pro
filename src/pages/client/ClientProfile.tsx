@@ -1,5 +1,5 @@
-
 import { useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { ClientNavbar } from "@/components/client/ClientNavbar";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -20,7 +20,7 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
-// Mock appointments data
+// Mock appointments data with updated type
 const MOCK_APPOINTMENTS = [
   {
     id: "1",
@@ -42,9 +42,15 @@ const MOCK_APPOINTMENTS = [
   }
 ];
 
+// Define the type for our appointments
+type AppointmentItem = typeof MOCK_APPOINTMENTS[0] & {
+  status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
+};
+
 export default function ClientProfile() {
   const { user, logout } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [profileImage, setProfileImage] = useState<string | undefined>(user?.profileImage);
   const [isEditingName, setIsEditingName] = useState(false);
@@ -52,7 +58,7 @@ export default function ClientProfile() {
   const [name, setName] = useState(user?.name || "");
   const [email, setEmail] = useState(user?.email || "");
   const [phone, setPhone] = useState(user?.phone || "");
-  const [appointments, setAppointments] = useState(MOCK_APPOINTMENTS);
+  const [appointments, setAppointments] = useState<AppointmentItem[]>(MOCK_APPOINTMENTS);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

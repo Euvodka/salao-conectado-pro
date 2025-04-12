@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ClientNavbar } from "@/components/client/ClientNavbar";
@@ -34,7 +33,6 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 
-// Mock conversation data
 const CONVERSATIONS = [
   {
     id: "1",
@@ -60,7 +58,6 @@ const CONVERSATIONS = [
   },
 ];
 
-// Mock messages for a conversation
 const MESSAGES = [
   {
     id: "m1",
@@ -76,14 +73,12 @@ const MESSAGES = [
   },
 ];
 
-// Mock services
 const SERVICES = [
   { id: "s1", name: "Corte Feminino", duration: 60, price: 120 },
   { id: "s2", name: "Coloração", duration: 120, price: 200 },
   { id: "s3", name: "Hidratação", duration: 45, price: 80 },
 ];
 
-// Mock available times
 const AVAILABLE_TIMES = [
   "09:00", "10:00", "11:00", "14:00", "15:00", "16:00", "17:00"
 ];
@@ -102,7 +97,6 @@ export default function ClientMessages() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Scroll to bottom when messages change
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
@@ -121,7 +115,6 @@ export default function ClientMessages() {
     setActiveMessages([...activeMessages, message]);
     setNewMessage("");
     
-    // Simulate response after a delay
     setTimeout(() => {
       const response = {
         id: `m${activeMessages.length + 2}`,
@@ -144,7 +137,6 @@ export default function ClientMessages() {
     if (selectedService && bookingDate && bookingTime) {
       const service = SERVICES.find(s => s.id === selectedService);
       
-      // Add message to chat about the appointment request
       const bookingMessage = {
         id: `m${activeMessages.length + 1}`,
         senderId: "user",
@@ -154,7 +146,6 @@ export default function ClientMessages() {
       
       setActiveMessages([...activeMessages, bookingMessage]);
       
-      // Simulate response after a delay
       setTimeout(() => {
         const response = {
           id: `m${activeMessages.length + 2}`,
@@ -171,7 +162,6 @@ export default function ClientMessages() {
       });
       
       setIsBookingOpen(false);
-      // Reset form
       setBookingDate(null);
       setBookingTime(null);
       setSelectedService(null);
@@ -187,20 +177,18 @@ export default function ClientMessages() {
     });
   };
   
-  // Filter conversations based on search term
   const filteredConversations = CONVERSATIONS.filter(convo => 
     convo.professional.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Function to render booking button in message
   const renderBookingButton = () => {
     return (
       <Dialog open={isBookingOpen} onOpenChange={setIsBookingOpen}>
         <DialogTrigger asChild>
           <Button 
             className="mt-4 bg-salon-500 hover:bg-salon-600" 
-            leftIcon={<Calendar className="mr-2 h-4 w-4" />}
           >
+            <Calendar className="mr-2 h-4 w-4" />
             Agendar Horário
           </Button>
         </DialogTrigger>
@@ -284,7 +272,6 @@ export default function ClientMessages() {
         
         {filteredConversations.length > 0 || selectedConversation ? (
           <div className="grid md:grid-cols-3 gap-4 h-[70vh]">
-            {/* Conversations list */}
             <Card className={`md:col-span-1 overflow-hidden ${selectedConversation ? 'hidden md:block' : ''}`}>
               <CardHeader className="p-4 pb-2">
                 <div className="flex items-center space-x-2">
@@ -333,7 +320,6 @@ export default function ClientMessages() {
               </CardContent>
             </Card>
             
-            {/* Message thread */}
             {selectedConversation ? (
               <Card className="md:col-span-2 flex flex-col h-full overflow-hidden">
                 <CardHeader className="p-4 border-b flex-shrink-0">
