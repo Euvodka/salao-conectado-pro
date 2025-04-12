@@ -1,3 +1,4 @@
+
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { ClientNavbar } from "@/components/client/ClientNavbar";
@@ -42,9 +43,15 @@ const MOCK_APPOINTMENTS = [
   }
 ];
 
-// Define the type for our appointments
-type AppointmentItem = typeof MOCK_APPOINTMENTS[0] & {
+// Define the type for our appointments - updated to include all possible status values
+type AppointmentItem = {
+  id: string;
+  professionalId: string;
+  professionalName: string;
+  service: string;
+  date: string;
   status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
+  price: number;
 };
 
 export default function ClientProfile() {
@@ -140,6 +147,8 @@ export default function ClientProfile() {
         return <Badge className="bg-yellow-500">Pendente</Badge>;
       case 'cancelled':
         return <Badge className="bg-red-500">Cancelado</Badge>;
+      case 'completed':
+        return <Badge className="bg-blue-500">Concluído</Badge>;
       default:
         return <Badge>Desconhecido</Badge>;
     }
