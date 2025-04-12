@@ -1,17 +1,40 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ProfessionalNavbar } from "@/components/professional/ProfessionalNavbar";
 import { PostCard } from "@/components/feed/PostCard";
+import { CommentSection } from "@/components/feed/CommentSection";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { CustomDialog } from "@/components/ui/custom-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Camera, Image, Loader2 } from "lucide-react";
+import { Camera, Image, Loader2, MessageSquare, X } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { Post } from "@/types";
 import { useToast } from "@/components/ui/use-toast";
+
+// Sample comments for posts
+const sampleComments = [
+  {
+    id: "c1",
+    author: {
+      name: "Mariana Costa",
+      avatar: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?q=80&w=1471&auto=format&fit=crop",
+    },
+    content: "Ficou incrível! Quero marcar um horário para fazer igual.",
+    createdAt: "Há 2 horas",
+  },
+  {
+    id: "c2",
+    author: {
+      name: "Pedro Alves",
+      avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=1374&auto=format&fit=crop",
+    },
+    content: "Adorei o resultado! Qual marca de produtos você usa?",
+    createdAt: "Há 1 dia",
+  }
+];
 
 // Mock data for posts
 const MOCK_POSTS: Post[] = [
@@ -50,16 +73,34 @@ const MOCK_POSTS: Post[] = [
   },
 ];
 
+type PostWithComments = Post & {
+  commentList?: {
+    id: string;
+    author: {
+      name: string;
+      avatar?: string;
+    };
+    content: string;
+    createdAt: string;
+  }[];
+};
+
 export default function ProfessionalFeed() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [posts, setPosts] = useState<Post[]>([]);
+  const [posts, setPosts] = useState<PostWithComments[]>([]);
+  const [savedPosts, setSavedPosts] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'feed' | 'saved'>('feed');
+  const [selectedPost, setSelectedPost] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [newPost, setNewPost] = useState({
     content: "",
     imageUrl: "",
+    imageFile: null as File | null,
+    imagePreview: null as string | null,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -69,7 +110,14 @@ export default function ProfessionalFeed() {
       try {
         // In a real app, this would be an API call
         await new Promise(resolve => setTimeout(resolve, 1000));
-        setPosts(MOCK_POSTS);
+        
+        // Add sample comments to the posts
+        const postsWithComments = MOCK_POSTS.map(post => ({
+          ...post,
+          commentList: post.id === "1" ? sampleComments : [],
+        }));
+        
+        setPosts(postsWithComments);
       } catch (error) {
         console.error("Failed to fetch posts:", error);
       } finally {
@@ -86,6 +134,27 @@ export default function ProfessionalFeed() {
       ...prev,
       [name]: value,
     }));
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        setNewPost(prev => ({
+          ...prev,
+          imageFile: file,
+          imagePreview: reader.result as string,
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleFileSelectClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
   };
 
   const handleSubmit = async () => {
@@ -105,16 +174,17 @@ export default function ProfessionalFeed() {
       await new Promise(resolve => setTimeout(resolve, 1500));
       
       // Create a new post
-      const newPostObject: Post = {
+      const newPostObject: PostWithComments = {
         id: `new-${Date.now()}`,
         professionalId: user?.id || "1",
         professionalName: user?.name || "Profissional",
         professionalImage: user?.profileImage || "",
         content: newPost.content,
-        image: newPost.imageUrl || "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?q=80&w=1470&auto=format&fit=crop",
+        image: newPost.imagePreview || newPost.imageUrl || "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?q=80&w=1470&auto=format&fit=crop",
         likes: 0,
         comments: 0,
         createdAt: new Date().toISOString(),
+        commentList: [],
       };
       
       // Add to the beginning of the posts array
@@ -124,6 +194,8 @@ export default function ProfessionalFeed() {
       setNewPost({
         content: "",
         imageUrl: "",
+        imageFile: null,
+        imagePreview: null,
       });
       setIsOpen(false);
       
@@ -143,11 +215,89 @@ export default function ProfessionalFeed() {
     }
   };
 
+  const handleSavePost = (postId: string) => {
+    if (savedPosts.includes(postId)) {
+      setSavedPosts(savedPosts.filter(id => id !== postId));
+      toast({
+        title: "Publicação removida",
+        description: "Publicação removida dos salvos."
+      });
+    } else {
+      setSavedPosts([...savedPosts, postId]);
+      toast({
+        title: "Publicação salva",
+        description: "Publicação adicionada aos salvos."
+      });
+    }
+  };
+
+  const handleViewComments = (postId: string) => {
+    setSelectedPost(postId);
+  };
+
+  const handleCloseComments = () => {
+    setSelectedPost(null);
+  };
+
+  const handleAddComment = (postId: string, comment: string) => {
+    if (!comment.trim()) return;
+    
+    setPosts(posts.map(post => {
+      if (post.id === postId) {
+        const newComment = {
+          id: `comment-${Date.now()}`,
+          author: {
+            name: user?.name || "Você",
+            avatar: user?.profileImage,
+          },
+          content: comment,
+          createdAt: "Agora",
+        };
+        
+        return {
+          ...post,
+          comments: post.comments + 1,
+          commentList: [...(post.commentList || []), newComment],
+        };
+      }
+      return post;
+    }));
+  };
+
+  const getPostComments = (postId: string) => {
+    const post = posts.find(p => p.id === postId);
+    return post?.commentList || [];
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 pb-20 md:pb-0">
       <ProfessionalNavbar />
       
       <main className="container max-w-2xl mx-auto px-4 pt-4 pb-20 md:pt-6">
+        {/* Tabs for navigation */}
+        <div className="flex border-b mb-6">
+          <button
+            className={`py-2 px-4 font-medium ${
+              activeTab === 'feed'
+                ? 'text-salon-600 border-b-2 border-salon-600'
+                : 'text-gray-500 hover:text-salon-500'
+            }`}
+            onClick={() => setActiveTab('feed')}
+          >
+            Feed
+          </button>
+          <button
+            className={`py-2 px-4 font-medium ${
+              activeTab === 'saved'
+                ? 'text-salon-600 border-b-2 border-salon-600'
+                : 'text-gray-500 hover:text-salon-500'
+            }`}
+            onClick={() => setActiveTab('saved')}
+          >
+            Salvos
+          </button>
+        </div>
+        
         {/* Create post card */}
         <Card className="mb-6">
           <CardContent className="pt-6">
@@ -199,33 +349,79 @@ export default function ProfessionalFeed() {
                   />
                 </div>
                 
-                <div className="space-y-2">
-                  <Label htmlFor="imageUrl">URL da imagem</Label>
-                  <Input
-                    id="imageUrl"
-                    name="imageUrl"
-                    value={newPost.imageUrl}
-                    onChange={handleInputChange}
-                    placeholder="https://exemplo.com/imagem.jpg"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Cole o link da imagem ou suba uma foto do seu trabalho.
-                  </p>
-                </div>
+                {!newPost.imagePreview && (
+                  <div className="space-y-2">
+                    <Label htmlFor="imageUrl">URL da imagem</Label>
+                    <Input
+                      id="imageUrl"
+                      name="imageUrl"
+                      value={newPost.imageUrl}
+                      onChange={handleInputChange}
+                      placeholder="https://exemplo.com/imagem.jpg"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Cole o link da imagem ou suba uma foto do seu trabalho.
+                    </p>
+                  </div>
+                )}
                 
-                <div className="bg-gray-50 border border-dashed border-gray-200 rounded-md p-6 text-center">
-                  <Camera className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground mb-2">
-                    Arraste e solte uma imagem ou clique para selecionar
-                  </p>
-                  <Button variant="outline" type="button" size="sm">
-                    Selecionar Arquivo
-                  </Button>
-                </div>
+                {newPost.imagePreview ? (
+                  <div className="relative">
+                    <img 
+                      src={newPost.imagePreview} 
+                      alt="Preview" 
+                      className="w-full h-64 object-cover rounded-md" 
+                    />
+                    <Button 
+                      variant="destructive" 
+                      size="icon" 
+                      className="absolute top-2 right-2 rounded-full"
+                      onClick={() => setNewPost(prev => ({ ...prev, imagePreview: null, imageFile: null }))}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div 
+                    className="bg-gray-50 border border-dashed border-gray-200 rounded-md p-6 text-center cursor-pointer"
+                    onClick={handleFileSelectClick}
+                  >
+                    <Camera className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Arraste e solte uma imagem ou clique para selecionar
+                    </p>
+                    <Button variant="outline" type="button" size="sm">
+                      Selecionar Arquivo
+                    </Button>
+                    <input 
+                      type="file"
+                      ref={fileInputRef}
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleImageChange}
+                    />
+                  </div>
+                )}
               </div>
             </CustomDialog>
           </CardContent>
         </Card>
+
+        {/* Comments modal */}
+        {selectedPost && (
+          <CustomDialog
+            open={!!selectedPost}
+            onOpenChange={() => setSelectedPost(null)}
+            title="Comentários"
+            description="Veja e responda aos comentários da sua publicação."
+          >
+            <CommentSection 
+              postId={selectedPost} 
+              initialComments={getPostComments(selectedPost)}
+              onClose={handleCloseComments}
+            />
+          </CustomDialog>
+        )}
 
         {/* Content feed */}
         <div>
@@ -253,10 +449,54 @@ export default function ProfessionalFeed() {
                 </div>
               ))}
             </div>
+          ) : activeTab === 'feed' ? (
+            <div className="space-y-6">
+              {posts.map(post => (
+                <div key={post.id}>
+                  <PostCard 
+                    post={post} 
+                    userRole="professional" 
+                    isSaved={savedPosts.includes(post.id)}
+                    onSave={() => handleSavePost(post.id)}
+                    onCommentClick={() => handleViewComments(post.id)}
+                  />
+                </div>
+              ))}
+              {posts.length === 0 && (
+                <div className="text-center p-8 border rounded-md bg-white">
+                  <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-medium mb-2">Sem publicações</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Não há publicações para exibir no momento.
+                  </p>
+                  <Button onClick={() => setIsOpen(true)}>Criar Publicação</Button>
+                </div>
+              )}
+            </div>
           ) : (
-            posts.map(post => (
-              <PostCard key={post.id} post={post} userRole="professional" />
-            ))
+            <div className="space-y-6">
+              {posts.filter(post => savedPosts.includes(post.id)).map(post => (
+                <div key={post.id}>
+                  <PostCard 
+                    post={post} 
+                    userRole="professional" 
+                    isSaved={true}
+                    onSave={() => handleSavePost(post.id)}
+                    onCommentClick={() => handleViewComments(post.id)}
+                  />
+                </div>
+              ))}
+              {savedPosts.length === 0 && (
+                <div className="text-center p-8 border rounded-md bg-white">
+                  <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-medium mb-2">Sem publicações salvas</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Você ainda não salvou nenhuma publicação.
+                  </p>
+                  <Button variant="outline" onClick={() => setActiveTab('feed')}>Voltar para o Feed</Button>
+                </div>
+              )}
+            </div>
           )}
         </div>
       </main>

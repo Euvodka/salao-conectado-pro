@@ -1,4 +1,5 @@
 
+import { useState, useRef } from "react";
 import { ProfessionalNavbar } from "@/components/professional/ProfessionalNavbar";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -6,10 +7,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { ServiceCard } from "@/components/feed/ServiceCard";
 import { PostCard } from "@/components/feed/PostCard";
-import { Pencil, LogOut, Star, Link as LinkIcon, AlertCircle } from "lucide-react";
+import { CustomDialog } from "@/components/ui/custom-dialog";
+import { Pencil, LogOut, Star, Link as LinkIcon, AlertCircle, Camera, Loader2, Plus } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { useToast } from "@/components/ui/use-toast";
 import { Service, Post } from "@/types";
 
 // Mock data
@@ -59,6 +65,117 @@ const posts: Post[] = [
 
 export default function ProfessionalProfile() {
   const { user, logout } = useAuth();
+  const { toast } = useToast();
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
+  const [isAddServiceOpen, setIsAddServiceOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [newProfileImage, setNewProfileImage] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const [profileData, setProfileData] = useState({
+    name: user?.name || "",
+    username: user?.username || "",
+    bio: "Especialista em cortes e coloração há 8 anos.",
+    email: "contato@salaoconectado.pro",
+    phone: "(11) 99999-9999",
+    categories: ["Cabelo", "Maquiagem", "Unhas"],
+  });
+  
+  const [newService, setNewService] = useState<Partial<Service>>({
+    name: "",
+    description: "",
+    price: 0,
+    duration: 30,
+    image: ""
+  });
+
+  const [myPosts, setMyPosts] = useState<Post[]>(posts);
+
+  const handleProfileUpdate = () => {
+    setIsSubmitting(true);
+    
+    // Simulate API call
+    setTimeout(() => {
+      setIsSubmitting(false);
+      setIsEditProfileOpen(false);
+      
+      toast({
+        title: "Perfil atualizado",
+        description: "Suas informações foram atualizadas com sucesso!",
+      });
+    }, 1500);
+  };
+  
+  const handleProfileImageClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+  
+  const handleProfileImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          setNewProfileImage(event.target.result as string);
+          
+          toast({
+            title: "Imagem atualizada",
+            description: "Sua foto de perfil foi atualizada com sucesso!",
+          });
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+  
+  const handleAddService = () => {
+    setIsSubmitting(true);
+    
+    // Validate required fields
+    if (!newService.name || !newService.description || !newService.price) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Por favor preencha todos os campos obrigatórios.",
+        variant: "destructive",
+      });
+      setIsSubmitting(false);
+      return;
+    }
+    
+    // Simulate API call
+    setTimeout(() => {
+      const serviceToAdd: Service = {
+        id: `service-${Date.now()}`,
+        name: newService.name || "",
+        description: newService.description || "",
+        price: newService.price || 0,
+        duration: newService.duration || 30,
+        image: newService.image || "https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?q=80&w=1470&auto=format&fit=crop"
+      };
+      
+      // Add the new service to the list
+      services.push(serviceToAdd);
+      
+      // Reset form
+      setNewService({
+        name: "",
+        description: "",
+        price: 0,
+        duration: 30,
+        image: ""
+      });
+      
+      setIsSubmitting(false);
+      setIsAddServiceOpen(false);
+      
+      toast({
+        title: "Serviço adicionado",
+        description: "Seu novo serviço foi adicionado com sucesso!",
+      });
+    }, 1500);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20 md:pb-0">
@@ -70,19 +187,31 @@ export default function ProfessionalProfile() {
             <CardContent className="p-6">
               <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
                 <div className="relative">
-                  <Avatar className="w-24 h-24 border-4 border-white shadow">
-                    <AvatarImage src={user?.profileImage} alt={user?.name} />
+                  <Avatar className="w-24 h-24 border-4 border-white shadow cursor-pointer" onClick={handleProfileImageClick}>
+                    <AvatarImage src={newProfileImage || user?.profileImage} alt={user?.name} />
                     <AvatarFallback className="text-2xl bg-salon-200 text-salon-700">
                       {user?.name.charAt(0)}
                     </AvatarFallback>
                   </Avatar>
-                  <Button size="icon" variant="secondary" className="absolute bottom-0 right-0 rounded-full h-8 w-8">
+                  <Button 
+                    size="icon" 
+                    variant="secondary" 
+                    className="absolute bottom-0 right-0 rounded-full h-8 w-8"
+                    onClick={handleProfileImageClick}
+                  >
                     <Pencil className="h-4 w-4" />
                   </Button>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleProfileImageChange}
+                  />
                 </div>
                 <div className="text-center md:text-left flex-1">
-                  <h1 className="text-2xl font-bold text-salon-800">{user?.name}</h1>
-                  <p className="text-muted-foreground">@{user?.username}</p>
+                  <h1 className="text-2xl font-bold text-salon-800">{profileData.name}</h1>
+                  <p className="text-muted-foreground">@{profileData.username}</p>
                   <div className="flex items-center justify-center md:justify-start mt-2 gap-4">
                     <div className="flex items-center">
                       <Star className="h-4 w-4 text-amber-500 mr-1" />
@@ -94,13 +223,17 @@ export default function ProfessionalProfile() {
                     </div>
                   </div>
                   <div className="mt-3 flex flex-wrap justify-center md:justify-start gap-2">
-                    <Badge variant="secondary">Cabelo</Badge>
-                    <Badge variant="secondary">Maquiagem</Badge>
-                    <Badge variant="secondary">Unhas</Badge>
+                    {profileData.categories.map((category, index) => (
+                      <Badge key={index} variant="secondary">{category}</Badge>
+                    ))}
                   </div>
                 </div>
                 <div className="md:text-right space-y-2">
-                  <Button variant="outline" className="w-full md:w-auto">
+                  <Button 
+                    variant="outline" 
+                    className="w-full md:w-auto"
+                    onClick={() => setIsEditProfileOpen(true)}
+                  >
                     <Pencil className="h-4 w-4 mr-2" /> Editar Perfil
                   </Button>
                   <Button variant="outline" className="w-full md:w-auto hidden md:inline-flex" onClick={logout}>
@@ -125,10 +258,10 @@ export default function ProfessionalProfile() {
               <Button>Nova Publicação</Button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {posts.map(post => (
+              {myPosts.map(post => (
                 <PostCard key={post.id} post={post} userRole="professional" />
               ))}
-              {posts.length === 0 && (
+              {myPosts.length === 0 && (
                 <div className="col-span-full text-center p-8 border rounded-md bg-white">
                   <p className="text-muted-foreground mb-2">Você ainda não tem publicações</p>
                   <Button>Criar primeira publicação</Button>
@@ -139,12 +272,21 @@ export default function ProfessionalProfile() {
           
           <TabsContent value="services" className="mt-0">
             <div className="flex justify-end mb-4">
-              <Button>Adicionar Serviço</Button>
+              <Button onClick={() => setIsAddServiceOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Adicionar Serviço
+              </Button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {services.map(service => (
                 <ServiceCard key={service.id} service={service} />
               ))}
+              {services.length === 0 && (
+                <div className="col-span-full text-center p-8 border rounded-md bg-white">
+                  <p className="text-muted-foreground mb-2">Você ainda não cadastrou nenhum serviço</p>
+                  <Button onClick={() => setIsAddServiceOpen(true)}>Adicionar primeiro serviço</Button>
+                </div>
+              )}
             </div>
           </TabsContent>
           
@@ -254,7 +396,19 @@ export default function ProfessionalProfile() {
                     <code className="bg-white px-3 py-2 rounded border flex-1 text-salon-800">
                       https://salaoconectado.pro/@{user?.username}
                     </code>
-                    <Button variant="outline" className="ml-2">Copiar</Button>
+                    <Button 
+                      variant="outline" 
+                      className="ml-2"
+                      onClick={() => {
+                        navigator.clipboard.writeText(`https://salaoconectado.pro/@${user?.username}`);
+                        toast({
+                          title: "Link copiado",
+                          description: "Link copiado para a área de transferência!"
+                        });
+                      }}
+                    >
+                      Copiar
+                    </Button>
                   </div>
                 </div>
                 
@@ -285,7 +439,17 @@ export default function ProfessionalProfile() {
                     </div>
                   </div>
                   
-                  <Button className="w-full">Salvar Configurações</Button>
+                  <Button 
+                    className="w-full"
+                    onClick={() => {
+                      toast({
+                        title: "Configurações salvas",
+                        description: "As configurações do seu link foram salvas com sucesso!"
+                      });
+                    }}
+                  >
+                    Salvar Configurações
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -298,6 +462,216 @@ export default function ProfessionalProfile() {
           </Button>
         </div>
       </main>
+
+      {/* Edit Profile Dialog */}
+      <CustomDialog
+        open={isEditProfileOpen}
+        onOpenChange={setIsEditProfileOpen}
+        title="Editar Perfil"
+        description="Atualize suas informações de perfil para que seus clientes possam te conhecer melhor."
+        footer={
+          <>
+            <Button variant="outline" onClick={() => setIsEditProfileOpen(false)} disabled={isSubmitting}>
+              Cancelar
+            </Button>
+            <Button onClick={handleProfileUpdate} disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Salvando...
+                </>
+              ) : (
+                "Salvar"
+              )}
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="name">Nome*</Label>
+            <Input 
+              id="name" 
+              value={profileData.name} 
+              onChange={(e) => setProfileData(prev => ({ ...prev, name: e.target.value }))}
+              placeholder="Seu nome completo" 
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="username">Nome de usuário*</Label>
+            <Input 
+              id="username" 
+              value={profileData.username} 
+              onChange={(e) => setProfileData(prev => ({ ...prev, username: e.target.value }))}
+              placeholder="seu_usuario" 
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="bio">Bio</Label>
+            <Textarea 
+              id="bio" 
+              value={profileData.bio} 
+              onChange={(e) => setProfileData(prev => ({ ...prev, bio: e.target.value }))}
+              placeholder="Conte um pouco sobre você e sua experiência..." 
+              rows={4} 
+            />
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email*</Label>
+              <Input 
+                id="email" 
+                type="email" 
+                value={profileData.email} 
+                onChange={(e) => setProfileData(prev => ({ ...prev, email: e.target.value }))}
+                placeholder="seu@email.com" 
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="phone">Telefone*</Label>
+              <Input 
+                id="phone" 
+                value={profileData.phone} 
+                onChange={(e) => setProfileData(prev => ({ ...prev, phone: e.target.value }))}
+                placeholder="(00) 00000-0000" 
+              />
+            </div>
+          </div>
+          
+          <div className="space-y-2">
+            <Label>Categorias</Label>
+            <div className="flex flex-wrap gap-2">
+              {profileData.categories.map((category, index) => (
+                <Badge key={index} variant="secondary" className="px-3 py-1">
+                  {category}
+                  <button 
+                    className="ml-2 text-gray-500 hover:text-gray-700"
+                    onClick={() => {
+                      const newCategories = [...profileData.categories];
+                      newCategories.splice(index, 1);
+                      setProfileData(prev => ({ ...prev, categories: newCategories }));
+                    }}
+                  >
+                    ×
+                  </button>
+                </Badge>
+              ))}
+              <div className="flex items-center">
+                <Input 
+                  placeholder="Nova categoria" 
+                  className="max-w-[150px]"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && e.currentTarget.value.trim()) {
+                      e.preventDefault();
+                      setProfileData(prev => ({
+                        ...prev,
+                        categories: [...prev.categories, e.currentTarget.value.trim()]
+                      }));
+                      e.currentTarget.value = '';
+                    }
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </CustomDialog>
+
+      {/* Add Service Dialog */}
+      <CustomDialog
+        open={isAddServiceOpen}
+        onOpenChange={setIsAddServiceOpen}
+        title="Adicionar Serviço"
+        description="Cadastre um novo serviço para oferecer aos seus clientes."
+        footer={
+          <>
+            <Button variant="outline" onClick={() => setIsAddServiceOpen(false)} disabled={isSubmitting}>
+              Cancelar
+            </Button>
+            <Button onClick={handleAddService} disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Salvando...
+                </>
+              ) : (
+                "Adicionar"
+              )}
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="service-name">Nome do serviço*</Label>
+            <Input 
+              id="service-name" 
+              value={newService.name || ''} 
+              onChange={(e) => setNewService(prev => ({ ...prev, name: e.target.value }))}
+              placeholder="Ex: Corte Feminino" 
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="service-description">Descrição*</Label>
+            <Textarea 
+              id="service-description" 
+              value={newService.description || ''} 
+              onChange={(e) => setNewService(prev => ({ ...prev, description: e.target.value }))}
+              placeholder="Descreva o serviço em detalhes..." 
+              rows={3} 
+            />
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="service-price">Preço (R$)*</Label>
+              <Input 
+                id="service-price" 
+                type="number" 
+                value={newService.price || ''} 
+                onChange={(e) => setNewService(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
+                placeholder="0,00" 
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="service-duration">Duração (min)*</Label>
+              <Input 
+                id="service-duration" 
+                type="number" 
+                value={newService.duration || ''} 
+                onChange={(e) => setNewService(prev => ({ ...prev, duration: parseInt(e.target.value) || 0 }))}
+                placeholder="30" 
+              />
+            </div>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="service-image">URL da Imagem</Label>
+            <Input 
+              id="service-image" 
+              value={newService.image || ''} 
+              onChange={(e) => setNewService(prev => ({ ...prev, image: e.target.value }))}
+              placeholder="https://exemplo.com/imagem.jpg" 
+            />
+          </div>
+          
+          <div className="bg-gray-50 border border-dashed border-gray-200 rounded-md p-6 text-center">
+            <Camera className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+            <p className="text-sm text-muted-foreground mb-2">
+              Arraste e solte uma imagem ou clique para selecionar
+            </p>
+            <Button variant="outline" type="button" size="sm">
+              Selecionar Arquivo
+            </Button>
+          </div>
+        </div>
+      </CustomDialog>
     </div>
   );
 }

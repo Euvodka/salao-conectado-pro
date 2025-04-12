@@ -1,16 +1,21 @@
 
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { ProfessionalNavbar } from "@/components/professional/ProfessionalNavbar";
 import { StatCard } from "@/components/dashboard/StatCard";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar as CalendarIcon, Clock, DollarSign, TrendingUp, Users } from "lucide-react";
+import { PerformanceChart } from "@/components/dashboard/PerformanceChart";
+import { ClientRemarketingCard } from "@/components/dashboard/ClientRemarketingCard";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { CalendarIcon, Clock, DollarSign, Users } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { useToast } from "@/components/ui/use-toast";
 
 export default function ProfessionalDashboard() {
+  const navigate = useNavigate();
   const { user } = useAuth();
+  const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -50,6 +55,56 @@ export default function ProfessionalDashboard() {
     }
   ];
 
+  const handleNewPost = () => {
+    navigate('/professional/feed');
+    toast({
+      title: "Criar nova publicação",
+      description: "Redirecionando para a página de publicações.",
+    });
+  };
+
+  const handleSettings = () => {
+    navigate('/professional/profile');
+    toast({
+      title: "Configurações",
+      description: "Redirecionando para a página de perfil.",
+    });
+  };
+
+  const handleQuickAction = (action: string) => {
+    switch (action) {
+      case 'appointment':
+        navigate('/professional/calendar');
+        toast({
+          title: "Novo Agendamento",
+          description: "Redirecionando para a agenda.",
+        });
+        break;
+      case 'client':
+        toast({
+          title: "Adicionar Cliente",
+          description: "Abrindo formulário de novo cliente.",
+        });
+        break;
+      case 'payment':
+        toast({
+          title: "Registrar Pagamento",
+          description: "Abrindo formulário de pagamento.",
+        });
+        break;
+      default:
+        break;
+    }
+  };
+
+  const handleViewSchedule = () => {
+    navigate('/professional/calendar');
+    toast({
+      title: "Ver Agenda",
+      description: "Redirecionando para a agenda completa.",
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 pb-20 md:pb-0">
       <ProfessionalNavbar />
@@ -61,8 +116,8 @@ export default function ProfessionalDashboard() {
             <p className="text-muted-foreground">Bem-vindo de volta, {user?.name.split(' ')[0]}!</p>
           </div>
           <div className="mt-4 md:mt-0 space-x-3">
-            <Button>Nova Publicação</Button>
-            <Button variant="outline">Configurações</Button>
+            <Button onClick={handleNewPost}>Nova Publicação</Button>
+            <Button variant="outline" onClick={handleSettings}>Configurações</Button>
           </div>
         </div>
 
@@ -107,91 +162,10 @@ export default function ProfessionalDashboard() {
               {/* Left column */}
               <div className="lg:col-span-2 space-y-6">
                 {/* Performance chart section */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Análise de Desempenho</CardTitle>
-                    <CardDescription>Visualize o crescimento do seu negócio</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="h-[240px] flex items-center justify-center bg-gray-100 rounded-md">
-                      <TrendingUp className="h-8 w-8 text-muted-foreground" />
-                      <span className="ml-2 text-muted-foreground">Gráfico de desempenho</span>
-                    </div>
-                    <div className="grid grid-cols-3 gap-4 mt-4">
-                      <div className="bg-green-50 p-3 rounded-md">
-                        <p className="text-sm text-green-600 font-medium">Agendamentos</p>
-                        <p className="text-lg font-bold">+18%</p>
-                      </div>
-                      <div className="bg-blue-50 p-3 rounded-md">
-                        <p className="text-sm text-blue-600 font-medium">Faturamento</p>
-                        <p className="text-lg font-bold">+12%</p>
-                      </div>
-                      <div className="bg-purple-50 p-3 rounded-md">
-                        <p className="text-sm text-purple-600 font-medium">Novos clientes</p>
-                        <p className="text-lg font-bold">+15%</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                <PerformanceChart />
 
                 {/* Client remarketing section */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Clientes e Remarketing</CardTitle>
-                    <CardDescription>Gerencie seus clientes e envie mensagens personalizadas</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Tabs defaultValue="active">
-                      <TabsList className="mb-4">
-                        <TabsTrigger value="active">Clientes Ativos</TabsTrigger>
-                        <TabsTrigger value="inactive">Inativos (30+ dias)</TabsTrigger>
-                        <TabsTrigger value="new">Novos Clientes</TabsTrigger>
-                      </TabsList>
-                      <TabsContent value="active" className="space-y-4">
-                        <div className="rounded-md border">
-                          <div className="p-4">
-                            <div className="font-medium">Lista de clientes ativos</div>
-                            <div className="text-sm text-muted-foreground">
-                              Clientes que agendaram serviços nos últimos 30 dias
-                            </div>
-                          </div>
-                          <div className="border-t">
-                            {/* Sample active client list */}
-                            {Array.from({ length: 3 }).map((_, i) => (
-                              <div key={i} className="flex items-center justify-between p-4 border-b last:border-0">
-                                <div className="flex items-center space-x-3">
-                                  <Avatar>
-                                    <AvatarFallback>
-                                      {String.fromCharCode(65 + i)}
-                                    </AvatarFallback>
-                                  </Avatar>
-                                  <div>
-                                    <p className="font-medium">Cliente Ativo {i + 1}</p>
-                                    <p className="text-sm text-muted-foreground">Último agendamento: há {3 + i} dias</p>
-                                  </div>
-                                </div>
-                                <Button variant="outline" size="sm">Enviar mensagem</Button>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                        <Button variant="outline" className="w-full">Ver todos os clientes ativos</Button>
-                      </TabsContent>
-                      <TabsContent value="inactive">
-                        <div className="bg-amber-50 p-4 rounded-md mb-4">
-                          <p className="text-amber-800">26 clientes não agendaram nos últimos 30 dias.</p>
-                        </div>
-                        <Button>Enviar campanha de remarketing</Button>
-                      </TabsContent>
-                      <TabsContent value="new">
-                        <div className="bg-green-50 p-4 rounded-md mb-4">
-                          <p className="text-green-800">8 novos clientes este mês!</p>
-                        </div>
-                        <Button>Enviar mensagem de boas-vindas</Button>
-                      </TabsContent>
-                    </Tabs>
-                  </CardContent>
-                </Card>
+                <ClientRemarketingCard />
               </div>
 
               {/* Right column */}
@@ -200,14 +174,20 @@ export default function ProfessionalDashboard() {
                 <Card>
                   <CardHeader className="pb-2">
                     <CardTitle className="text-lg">Próximos Agendamentos</CardTitle>
-                    <CardDescription>Veja o que está programado para hoje e amanhã</CardDescription>
+                    <p className="text-sm text-muted-foreground">Veja o que está programado para hoje e amanhã</p>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
                       {upcomingAppointments.map((appointment) => (
                         <div
                           key={appointment.id}
-                          className="flex items-center justify-between p-3 rounded-md border"
+                          className="flex items-center justify-between p-3 rounded-md border hover:bg-gray-50 cursor-pointer"
+                          onClick={() => {
+                            toast({
+                              title: "Detalhes do agendamento",
+                              description: `Agendamento de ${appointment.client} para ${appointment.service}.`,
+                            });
+                          }}
                         >
                           <div className="flex items-center space-x-3">
                             <Avatar>
@@ -225,7 +205,11 @@ export default function ProfessionalDashboard() {
                           </div>
                         </div>
                       ))}
-                      <Button variant="outline" className="w-full">
+                      <Button 
+                        variant="outline" 
+                        className="w-full"
+                        onClick={handleViewSchedule}
+                      >
                         Ver Agenda Completa
                       </Button>
                     </div>
@@ -238,15 +222,26 @@ export default function ProfessionalDashboard() {
                     <CardTitle className="text-lg">Ações Rápidas</CardTitle>
                   </CardHeader>
                   <CardContent className="grid gap-2">
-                    <Button className="w-full justify-start">
+                    <Button 
+                      className="w-full justify-start"
+                      onClick={() => handleQuickAction('appointment')}
+                    >
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       Novo Agendamento
                     </Button>
-                    <Button variant="outline" className="w-full justify-start">
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-start"
+                      onClick={() => handleQuickAction('client')}
+                    >
                       <Users className="mr-2 h-4 w-4" />
                       Adicionar Cliente
                     </Button>
-                    <Button variant="outline" className="w-full justify-start">
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-start"
+                      onClick={() => handleQuickAction('payment')}
+                    >
                       <DollarSign className="mr-2 h-4 w-4" />
                       Registrar Pagamento
                     </Button>
