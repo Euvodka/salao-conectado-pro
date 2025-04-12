@@ -19,6 +19,7 @@ import ProfessionalFeed from "@/pages/professional/ProfessionalFeed";
 import ProfessionalMessages from "@/pages/professional/ProfessionalMessages";
 import ServiceManagement from "@/pages/professional/ServiceManagement";
 import ProfessionalProfile from "@/pages/professional/ProfessionalProfile";
+import ProfessionalClientView from "@/pages/professional/ProfessionalClientView";
 
 // Common pages
 import NotFound from "@/pages/NotFound";
@@ -157,6 +158,18 @@ export default function AppRoutes() {
         element={
           isAuthenticated && user?.role === "professional" ? (
             <ProfessionalProfile />
+          ) : (
+            <Navigate to="/" replace />
+          )
+        }
+      />
+      
+      {/* Professional profile viewed by clients - public route with some restrictions */}
+      <Route
+        path="/professionals/:id"
+        element={
+          isAuthenticated ? (
+            <ProfessionalClientView />
           ) : (
             <Navigate to="/" replace />
           )

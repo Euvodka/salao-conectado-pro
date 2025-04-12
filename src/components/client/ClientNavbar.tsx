@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/context/AuthContext";
 
 export function ClientNavbar() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -120,7 +120,7 @@ export function ClientNavbar() {
                       variant="destructive"
                       className="w-full mt-4"
                       onClick={() => {
-                        // Logout functionality will be implemented later
+                        logout();
                         setMobileMenuOpen(false);
                       }}
                     >
