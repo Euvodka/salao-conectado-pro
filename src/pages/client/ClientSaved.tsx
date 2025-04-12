@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ClientNavbar } from "@/components/client/ClientNavbar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -8,32 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Heart, MessageSquare, Bookmark, Clock, DollarSign } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Post, Service } from "@/types";
-
-// Mock saved posts data
-const SAVED_POSTS: Post[] = [
-  {
-    id: "1",
-    professionalId: "101",
-    professionalName: "Salão Beleza Total",
-    professionalImage: "https://images.unsplash.com/photo-1580618864194-0fb637e8f5da?q=80&w=1469&auto=format&fit=crop",
-    content: "Transformação completa! Corte + mechas + tratamento. Agende seu horário!",
-    image: "https://images.unsplash.com/photo-1595163153849-537b3572145c?q=80&w=1470&auto=format&fit=crop",
-    likes: 42,
-    comments: 5,
-    createdAt: "2023-04-10T14:48:00",
-  },
-  {
-    id: "3",
-    professionalId: "103",
-    professionalName: "Nails Design",
-    professionalImage: "https://images.unsplash.com/photo-1634283144126-a43aa004da84?q=80&w=1374&auto=format&fit=crop",
-    content: "Unhas em gel com nail art exclusivo! Qual é o seu favorito? 💅",
-    image: "https://images.unsplash.com/photo-1636018943957-6eb25813fde8?q=80&w=1470&auto=format&fit=crop",
-    likes: 63,
-    comments: 8,
-    createdAt: "2023-04-08T16:15:00",
-  },
-];
+import { PostCard } from "@/components/feed/PostCard";
 
 // Mock saved services data
 const SAVED_SERVICES: Service[] = [
@@ -56,12 +31,22 @@ const SAVED_SERVICES: Service[] = [
 ];
 
 export default function ClientSaved() {
-  const [savedPosts, setSavedPosts] = useState(SAVED_POSTS);
+  const [savedPosts, setSavedPosts] = useState<Post[]>([]);
   const [savedServices, setSavedServices] = useState(SAVED_SERVICES);
+
+  useEffect(() => {
+    // Load saved posts from localStorage
+    const savedPostsStr = localStorage.getItem('savedPosts');
+    if (savedPostsStr) {
+      setSavedPosts(JSON.parse(savedPostsStr));
+    }
+  }, []);
 
   const handleUnsave = (id: string, type: 'post' | 'service') => {
     if (type === 'post') {
-      setSavedPosts(prevPosts => prevPosts.filter(post => post.id !== id));
+      const newSavedPosts = savedPosts.filter(post => post.id !== id);
+      setSavedPosts(newSavedPosts);
+      localStorage.setItem('savedPosts', JSON.stringify(newSavedPosts));
     } else {
       setSavedServices(prevServices => prevServices.filter(service => service.id !== id));
     }
@@ -114,51 +99,11 @@ export default function ClientSaved() {
             {savedPosts.length > 0 ? (
               <div className="space-y-6">
                 {savedPosts.map(post => (
-                  <Card key={post.id} className="overflow-hidden">
-                    <CardContent className="p-0">
-                      <div className="p-4 flex items-center space-x-3">
-                        <Avatar>
-                          <AvatarImage src={post.professionalImage} alt={post.professionalName} />
-                          <AvatarFallback>{post.professionalName.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <h3 className="font-medium">{post.professionalName}</h3>
-                          <p className="text-xs text-muted-foreground">{formatDate(post.createdAt)}</p>
-                        </div>
-                        <Button className="ml-auto" variant="ghost" size="sm">
-                          Ver perfil
-                        </Button>
-                      </div>
-                      
-                      <div>
-                        <p className="px-4 pb-3">{post.content}</p>
-                        {post.image && (
-                          <div className="aspect-video w-full overflow-hidden bg-gray-100">
-                            <img src={post.image} alt="Post" className="w-full h-full object-cover" />
-                          </div>
-                        )}
-                      </div>
-                      
-                      <div className="p-4 flex items-center justify-between">
-                        <div className="flex space-x-4">
-                          <button className="flex items-center space-x-1 text-sm text-muted-foreground">
-                            <Heart className="h-4 w-4" />
-                            <span>{post.likes}</span>
-                          </button>
-                          <button className="flex items-center space-x-1 text-sm text-muted-foreground">
-                            <MessageSquare className="h-4 w-4" />
-                            <span>{post.comments}</span>
-                          </button>
-                        </div>
-                        <button 
-                          className="text-salon-600"
-                          onClick={() => handleUnsave(post.id, 'post')}
-                        >
-                          <Bookmark className="h-5 w-5 fill-current" />
-                        </button>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <PostCard 
+                    key={post.id} 
+                    post={post} 
+                    userRole="client"
+                  />
                 ))}
               </div>
             ) : (

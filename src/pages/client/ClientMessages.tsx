@@ -1,5 +1,6 @@
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { ClientNavbar } from "@/components/client/ClientNavbar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +8,31 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Search, Send } from "lucide-react";
+import { 
+  Search, 
+  Send, 
+  Calendar, 
+  Clock, 
+  ChevronRight,
+  Check
+} from "lucide-react";
+import { 
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
 
 // Mock conversation data
 const CONVERSATIONS = [
@@ -51,11 +76,37 @@ const MESSAGES = [
   },
 ];
 
+// Mock services
+const SERVICES = [
+  { id: "s1", name: "Corte Feminino", duration: 60, price: 120 },
+  { id: "s2", name: "Coloração", duration: 120, price: 200 },
+  { id: "s3", name: "Hidratação", duration: 45, price: 80 },
+];
+
+// Mock available times
+const AVAILABLE_TIMES = [
+  "09:00", "10:00", "11:00", "14:00", "15:00", "16:00", "17:00"
+];
+
 export default function ClientMessages() {
+  const { toast } = useToast();
+  const navigate = useNavigate();
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [newMessage, setNewMessage] = useState("");
   const [activeMessages, setActiveMessages] = useState(MESSAGES);
+  const [isBookingOpen, setIsBookingOpen] = useState(false);
+  const [bookingDate, setBookingDate] = useState<string | null>(null);
+  const [bookingTime, setBookingTime] = useState<string | null>(null);
+  const [selectedService, setSelectedService] = useState<string | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Scroll to bottom when messages change
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [activeMessages]);
 
   const handleSendMessage = () => {
     if (!newMessage.trim()) return;
@@ -81,11 +132,148 @@ export default function ClientMessages() {
       setActiveMessages(prev => [...prev, response]);
     }, 2000);
   };
+
+  const handleViewProfile = () => {
+    const professionalId = CONVERSATIONS.find(c => c.id === selectedConversation)?.professional.id;
+    if (professionalId) {
+      navigate(`/professionals/${professionalId}`);
+    }
+  };
+
+  const handleBookAppointment = () => {
+    if (selectedService && bookingDate && bookingTime) {
+      const service = SERVICES.find(s => s.id === selectedService);
+      
+      // Add message to chat about the appointment request
+      const bookingMessage = {
+        id: `m${activeMessages.length + 1}`,
+        senderId: "user",
+        text: `Gostaria de agendar um horário para ${service?.name} no dia ${formatDate(bookingDate)} às ${bookingTime}.`,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      };
+      
+      setActiveMessages([...activeMessages, bookingMessage]);
+      
+      // Simulate response after a delay
+      setTimeout(() => {
+        const response = {
+          id: `m${activeMessages.length + 2}`,
+          senderId: "101",
+          text: `Agendamento confirmado! Esperamos você no dia ${formatDate(bookingDate)} às ${bookingTime} para ${service?.name}.`,
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        };
+        setActiveMessages(prev => [...prev, response]);
+      }, 1500);
+      
+      toast({
+        title: "Agendamento enviado!",
+        description: "O profissional confirmou seu horário.",
+      });
+      
+      setIsBookingOpen(false);
+      // Reset form
+      setBookingDate(null);
+      setBookingTime(null);
+      setSelectedService(null);
+    }
+  };
+
+  const formatDate = (dateString: string): string => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  };
   
   // Filter conversations based on search term
   const filteredConversations = CONVERSATIONS.filter(convo => 
     convo.professional.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Function to render booking button in message
+  const renderBookingButton = () => {
+    return (
+      <Dialog open={isBookingOpen} onOpenChange={setIsBookingOpen}>
+        <DialogTrigger asChild>
+          <Button 
+            className="mt-4 bg-salon-500 hover:bg-salon-600" 
+            leftIcon={<Calendar className="mr-2 h-4 w-4" />}
+          >
+            Agendar Horário
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Agendar Horário</DialogTitle>
+            <DialogDescription>
+              Selecione o serviço, data e horário desejados para seu agendamento.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <label htmlFor="service" className="text-sm font-medium">
+                Serviço
+              </label>
+              <Select onValueChange={setSelectedService} value={selectedService || undefined}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione um serviço" />
+                </SelectTrigger>
+                <SelectContent>
+                  {SERVICES.map(service => (
+                    <SelectItem key={service.id} value={service.id}>
+                      {service.name} - {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(service.price)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="grid gap-2">
+              <label htmlFor="date" className="text-sm font-medium">
+                Data
+              </label>
+              <Input 
+                id="date" 
+                type="date" 
+                value={bookingDate || ''} 
+                onChange={(e) => setBookingDate(e.target.value)}
+                min={new Date().toISOString().split('T')[0]}
+              />
+            </div>
+            
+            <div className="grid gap-2">
+              <label htmlFor="time" className="text-sm font-medium">
+                Horário
+              </label>
+              <Select onValueChange={setBookingTime} value={bookingTime || undefined} disabled={!bookingDate}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione um horário" />
+                </SelectTrigger>
+                <SelectContent>
+                  {AVAILABLE_TIMES.map(time => (
+                    <SelectItem key={time} value={time}>
+                      {time}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button 
+              onClick={handleBookAppointment}
+              disabled={!selectedService || !bookingDate || !bookingTime}
+              className="bg-salon-500 hover:bg-salon-600"
+            >
+              Confirmar Agendamento
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 pb-16 md:pb-0">
@@ -175,7 +363,15 @@ export default function ClientMessages() {
                         <p className="text-xs text-muted-foreground">Online</p>
                       </div>
                     </div>
-                    <Button variant="outline" size="sm">Ver perfil</Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={handleViewProfile}
+                      className="gap-1"
+                    >
+                      Ver perfil
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
                   </div>
                 </CardHeader>
                 
@@ -201,6 +397,8 @@ export default function ClientMessages() {
                       </div>
                     </div>
                   ))}
+                  {renderBookingButton()}
+                  <div ref={messagesEndRef} />
                 </div>
                 
                 <div className="p-4 border-t">

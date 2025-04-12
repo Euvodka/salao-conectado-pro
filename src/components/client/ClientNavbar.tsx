@@ -1,138 +1,226 @@
 
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { Bell, Bookmark, Home, MessageSquare, Search, User } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { useLocation, Link } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/context/AuthContext";
+import { 
+  Popover,
+  PopoverContent,
+  PopoverTrigger
+} from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import { Bell } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 export function ClientNavbar() {
-  const { user, logout } = useAuth();
   const location = useLocation();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { user } = useAuth();
+  const [notifications, setNotifications] = useState([
+    {
+      id: 1,
+      title: "Agendamento confirmado",
+      content: "Seu horário para Corte Feminino foi confirmado",
+      time: "Há 2 horas",
+      read: false
+    },
+    {
+      id: 2,
+      title: "Novo post",
+      content: "Salão Beleza Total publicou um novo post",
+      time: "Há 5 horas",
+      read: false
+    },
+    {
+      id: 3,
+      title: "Promoção",
+      content: "Aproveite 20% de desconto em serviços de coloração",
+      time: "Ontem",
+      read: true
+    }
+  ]);
+  const [notificationOpen, setNotificationOpen] = useState(false);
 
-  const navItems = [
-    { name: "Feed", path: "/client", icon: Home },
-    { name: "Mensagens", path: "/client/messages", icon: MessageSquare },
-    { name: "Salvos", path: "/client/saved", icon: Bookmark },
-    { name: "Pesquisar", path: "/client/search", icon: Search },
-    { name: "Perfil", path: "/client/profile", icon: User },
-  ];
+  const markAsRead = (id: number) => {
+    setNotifications(notifications.map(notification => 
+      notification.id === id ? { ...notification, read: true } : notification
+    ));
+  };
 
-  const isActive = (path: string) => location.pathname === path;
+  const markAllAsRead = () => {
+    setNotifications(notifications.map(notification => ({ ...notification, read: true })));
+  };
+
+  const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
-    <>
-      {/* Mobile navbar bottom */}
-      <div className="fixed bottom-0 left-0 right-0 z-10 bg-white border-t border-gray-200 md:hidden">
-        <div className="flex justify-around">
-          {navItems.map((item) => (
+    <div className="fixed bottom-0 left-0 z-50 w-full md:relative bg-white border-t md:border-b shadow-sm">
+      <div className="container max-w-5xl mx-auto px-4 flex items-center justify-between h-16">
+        <Link to="/client" className="hidden md:block text-xl font-bold text-salon-700">
+          BeautySalon
+        </Link>
+        
+        <div className="flex-1 md:flex-initial w-full md:w-auto">
+          <div className="flex md:hidden items-center justify-between w-full">
             <Link
-              key={item.name}
-              to={item.path}
-              className={`flex flex-col items-center py-2 px-3 ${
-                isActive(item.path)
-                  ? "text-salon-600"
-                  : "text-gray-500 hover:text-salon-500"
+              to="/client"
+              className={`flex flex-col items-center px-4 py-2 ${
+                location.pathname === '/client' ? 'text-salon-600' : 'text-gray-500'
               }`}
             >
-              <item.icon size={24} />
-              <span className="text-xs mt-1">{item.name}</span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+                <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                <polyline points="9 22 9 12 15 12 15 22" />
+              </svg>
+              <span className="text-xs mt-1">Feed</span>
             </Link>
-          ))}
+            
+            <Link
+              to="/client/search"
+              className={`flex flex-col items-center px-4 py-2 ${
+                location.pathname === '/client/search' ? 'text-salon-600' : 'text-gray-500'
+              }`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.3-4.3" />
+              </svg>
+              <span className="text-xs mt-1">Buscar</span>
+            </Link>
+            
+            <Link
+              to="/client/saved"
+              className={`flex flex-col items-center px-4 py-2 ${
+                location.pathname === '/client/saved' ? 'text-salon-600' : 'text-gray-500'
+              }`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+                <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z" />
+              </svg>
+              <span className="text-xs mt-1">Salvos</span>
+            </Link>
+            
+            <Link
+              to="/client/messages"
+              className={`flex flex-col items-center px-4 py-2 ${
+                location.pathname === '/client/messages' ? 'text-salon-600' : 'text-gray-500'
+              }`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+              </svg>
+              <span className="text-xs mt-1">Mensagens</span>
+            </Link>
+            
+            <Link
+              to="/client/profile"
+              className={`flex flex-col items-center px-4 py-2 ${
+                location.pathname === '/client/profile' ? 'text-salon-600' : 'text-gray-500'
+              }`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+              <span className="text-xs mt-1">Perfil</span>
+            </Link>
+          </div>
+          
+          <div className="hidden md:flex items-center space-x-6">
+            <Link
+              to="/client"
+              className={`px-2 py-1 font-medium ${
+                location.pathname === '/client' ? 'text-salon-600' : 'text-gray-600 hover:text-salon-600'
+              }`}
+            >
+              Feed
+            </Link>
+            <Link
+              to="/client/search"
+              className={`px-2 py-1 font-medium ${
+                location.pathname === '/client/search' ? 'text-salon-600' : 'text-gray-600 hover:text-salon-600'
+              }`}
+            >
+              Buscar
+            </Link>
+            <Link
+              to="/client/saved"
+              className={`px-2 py-1 font-medium ${
+                location.pathname === '/client/saved' ? 'text-salon-600' : 'text-gray-600 hover:text-salon-600'
+              }`}
+            >
+              Salvos
+            </Link>
+            <Link
+              to="/client/messages"
+              className={`px-2 py-1 font-medium ${
+                location.pathname === '/client/messages' ? 'text-salon-600' : 'text-gray-600 hover:text-salon-600'
+              }`}
+            >
+              Mensagens
+            </Link>
+          </div>
+        </div>
+        
+        <div className="hidden md:flex items-center space-x-4">
+          <Popover open={notificationOpen} onOpenChange={setNotificationOpen}>
+            <PopoverTrigger asChild>
+              <Button variant="ghost" size="icon" className="relative">
+                <Bell className="h-5 w-5" />
+                {unreadCount > 0 && (
+                  <Badge 
+                    className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 bg-red-500 text-white"
+                  >
+                    {unreadCount}
+                  </Badge>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80 p-0">
+              <div className="p-4 border-b flex justify-between items-center">
+                <h3 className="font-medium">Notificações</h3>
+                {unreadCount > 0 && (
+                  <Button variant="ghost" size="sm" onClick={markAllAsRead}>
+                    Marcar todas como lidas
+                  </Button>
+                )}
+              </div>
+              <div className="max-h-96 overflow-auto">
+                {notifications.length > 0 ? (
+                  notifications.map(notification => (
+                    <div 
+                      key={notification.id} 
+                      className={`p-4 border-b hover:bg-gray-50 ${!notification.read ? 'bg-salon-50' : ''}`}
+                      onClick={() => markAsRead(notification.id)}
+                    >
+                      <div className="flex justify-between">
+                        <h4 className="font-medium text-sm">{notification.title}</h4>
+                        {!notification.read && (
+                          <div className="h-2 w-2 rounded-full bg-salon-500"></div>
+                        )}
+                      </div>
+                      <p className="text-sm text-gray-600 mt-1">{notification.content}</p>
+                      <p className="text-xs text-gray-500 mt-2">{notification.time}</p>
+                    </div>
+                  ))
+                ) : (
+                  <div className="p-4 text-center text-gray-500">
+                    Você não tem notificações
+                  </div>
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
+          
+          <Link to="/client/profile" className="flex items-center">
+            <Avatar className="h-8 w-8 border">
+              <AvatarImage src={user?.profileImage} alt={user?.name || 'User'} />
+              <AvatarFallback className="bg-salon-200 text-salon-700">
+                {user?.name?.charAt(0) || 'U'}
+              </AvatarFallback>
+            </Avatar>
+          </Link>
         </div>
       </div>
-
-      {/* Desktop navbar top */}
-      <header className="hidden md:block sticky top-0 z-40 bg-white border-b border-gray-200">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center">
-            <Link to="/client" className="flex items-center">
-              <h1 className="text-xl font-bold text-salon-700">Salão Conectado</h1>
-            </Link>
-          </div>
-
-          <nav className="flex items-center space-x-1">
-            {navItems.map((item) => (
-              <Link
-                key={item.name}
-                to={item.path}
-                className={`px-3 py-2 rounded-md flex items-center space-x-1 ${
-                  isActive(item.path)
-                    ? "bg-salon-100 text-salon-700"
-                    : "text-gray-600 hover:bg-gray-100"
-                }`}
-              >
-                <item.icon size={20} />
-                <span>{item.name}</span>
-              </Link>
-            ))}
-          </nav>
-
-          <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="icon" className="relative">
-              <Bell size={20} />
-              <span className="absolute top-0 right-0 block w-2 h-2 bg-red-500 rounded-full"></span>
-            </Button>
-            
-            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-              <SheetTrigger asChild>
-                <Button variant="ghost" className="p-0" aria-label="Menu do usuário">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={user?.profileImage} alt={user?.name} />
-                    <AvatarFallback className="bg-salon-200 text-salon-700">
-                      {user?.name.charAt(0)}
-                    </AvatarFallback>
-                  </Avatar>
-                </Button>
-              </SheetTrigger>
-              <SheetContent>
-                <div className="py-4">
-                  <div className="flex items-center space-x-3 mb-6">
-                    <Avatar className="h-10 w-10">
-                      <AvatarImage src={user?.profileImage} alt={user?.name} />
-                      <AvatarFallback className="bg-salon-200 text-salon-700">
-                        {user?.name.charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="font-medium">{user?.name}</p>
-                      <p className="text-sm text-muted-foreground">@{user?.username}</p>
-                    </div>
-                  </div>
-                  <nav className="space-y-2">
-                    <Link
-                      to="/client/profile"
-                      className="block px-3 py-2 rounded-md hover:bg-gray-100"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      Seu perfil
-                    </Link>
-                    <Link
-                      to="/client/settings"
-                      className="block px-3 py-2 rounded-md hover:bg-gray-100"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      Configurações
-                    </Link>
-                    <Button
-                      variant="destructive"
-                      className="w-full mt-4"
-                      onClick={() => {
-                        logout();
-                        setMobileMenuOpen(false);
-                      }}
-                    >
-                      Sair
-                    </Button>
-                  </nav>
-                </div>
-              </SheetContent>
-            </Sheet>
-          </div>
-        </div>
-      </header>
-    </>
+    </div>
   );
 }

@@ -5,6 +5,7 @@ import { ClientNavbar } from "@/components/client/ClientNavbar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/context/AuthContext";
 import { Post } from "@/types";
+import { useToast } from "@/hooks/use-toast";
 
 // Mock data for posts
 const MOCK_POSTS: Post[] = [
@@ -45,8 +46,10 @@ const MOCK_POSTS: Post[] = [
 
 export default function ClientFeed() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [savedPosts, setSavedPosts] = useState<Post[]>([]);
 
   useEffect(() => {
     // Simulate API fetch
@@ -55,6 +58,12 @@ export default function ClientFeed() {
         // In a real app, this would be an API call
         await new Promise(resolve => setTimeout(resolve, 1000));
         setPosts(MOCK_POSTS);
+        
+        // Get saved posts from localStorage if available
+        const savedPostsStr = localStorage.getItem('savedPosts');
+        if (savedPostsStr) {
+          setSavedPosts(JSON.parse(savedPostsStr));
+        }
       } catch (error) {
         console.error("Failed to fetch posts:", error);
       } finally {
@@ -64,6 +73,27 @@ export default function ClientFeed() {
 
     fetchPosts();
   }, []);
+  
+  const handleSavePost = (post: Post) => {
+    const newSavedPosts = [...savedPosts];
+    
+    // Check if post is already saved
+    const existingIndex = newSavedPosts.findIndex(p => p.id === post.id);
+    
+    if (existingIndex === -1) {
+      // If not saved, add it
+      newSavedPosts.push(post);
+      toast({
+        title: "Post salvo",
+        description: "O post foi adicionado à sua lista de salvos"
+      });
+    }
+    
+    setSavedPosts(newSavedPosts);
+    
+    // Save to localStorage
+    localStorage.setItem('savedPosts', JSON.stringify(newSavedPosts));
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 pb-16 md:pb-0">
@@ -112,7 +142,12 @@ export default function ClientFeed() {
             </div>
           ) : (
             posts.map(post => (
-              <PostCard key={post.id} post={post} userRole="client" />
+              <PostCard 
+                key={post.id} 
+                post={post} 
+                userRole="client" 
+                onSave={handleSavePost}
+              />
             ))
           )}
         </div>
