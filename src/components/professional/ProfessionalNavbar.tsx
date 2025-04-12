@@ -4,21 +4,22 @@ import { Link, useLocation } from "react-router-dom";
 import { 
   Bell, 
   Calendar, 
-  Grid3X3, 
   Home, 
   LayoutDashboard, 
+  LogOut,
   MessageSquare, 
   Scissors, 
-  Settings, 
   User
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/context/AuthContext";
+import { useToast } from "@/components/ui/use-toast";
 
 export function ProfessionalNavbar() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const { toast } = useToast();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -32,6 +33,15 @@ export function ProfessionalNavbar() {
   ];
 
   const isActive = (path: string) => location.pathname === path;
+
+  const handleLogout = () => {
+    logout();
+    toast({
+      title: "Logout realizado",
+      description: "Você foi desconectado com sucesso.",
+    });
+    setMobileMenuOpen(false);
+  };
 
   return (
     <>
@@ -130,11 +140,9 @@ export function ProfessionalNavbar() {
                     <Button
                       variant="destructive"
                       className="w-full mt-4"
-                      onClick={() => {
-                        // Logout functionality will be implemented later
-                        setMobileMenuOpen(false);
-                      }}
+                      onClick={handleLogout}
                     >
+                      <LogOut className="h-4 w-4 mr-2" />
                       Sair
                     </Button>
                   </nav>

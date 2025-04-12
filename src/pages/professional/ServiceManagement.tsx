@@ -4,11 +4,11 @@ import { ProfessionalNavbar } from "@/components/professional/ProfessionalNavbar
 import { ServiceCard } from "@/components/feed/ServiceCard";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { CustomDialog } from "@/components/ui/custom-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus } from "lucide-react";
+import { Plus, Loader2 } from "lucide-react";
 import { Service } from "@/types";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -53,6 +53,7 @@ export default function ServiceManagement() {
   const [isOpen, setIsOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [currentService, setCurrentService] = useState<Service | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
   const [formData, setFormData] = useState({
@@ -111,9 +112,7 @@ export default function ServiceManagement() {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  const handleSubmit = async () => {
     // Basic validation
     if (!formData.name || !formData.description || !formData.price || !formData.duration) {
       toast({
@@ -124,50 +123,66 @@ export default function ServiceManagement() {
       return;
     }
     
-    // Create or update service
-    if (isEditing && currentService) {
-      // Update existing service
-      const updatedService: Service = {
-        ...currentService,
-        name: formData.name,
-        description: formData.description,
-        price: parseFloat(formData.price),
-        duration: parseInt(formData.duration),
-        image: formData.image || currentService.image,
-      };
+    try {
+      setIsSubmitting(true);
       
-      setServices((prev) =>
-        prev.map((service) =>
-          service.id === currentService.id ? updatedService : service
-        )
-      );
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
+      // Create or update service
+      if (isEditing && currentService) {
+        // Update existing service
+        const updatedService: Service = {
+          ...currentService,
+          name: formData.name,
+          description: formData.description,
+          price: parseFloat(formData.price),
+          duration: parseInt(formData.duration),
+          image: formData.image || currentService.image,
+        };
+        
+        setServices((prev) =>
+          prev.map((service) =>
+            service.id === currentService.id ? updatedService : service
+          )
+        );
+        
+        toast({
+          title: "Serviço atualizado",
+          description: "As alterações foram salvas com sucesso.",
+        });
+      } else {
+        // Create new service
+        const newService: Service = {
+          id: `service-${Date.now()}`,
+          name: formData.name,
+          description: formData.description,
+          price: parseFloat(formData.price),
+          duration: parseInt(formData.duration),
+          image: formData.image || undefined,
+        };
+        
+        setServices((prev) => [...prev, newService]);
+        
+        toast({
+          title: "Serviço criado",
+          description: "O novo serviço foi adicionado com sucesso.",
+        });
+      }
+      
+      // Reset form and close dialog
+      resetForm();
+      setIsOpen(false);
+    } catch (error) {
+      console.error(error);
       toast({
-        title: "Serviço atualizado",
-        description: "As alterações foram salvas com sucesso.",
+        title: "Erro",
+        description: "Ocorreu um erro ao salvar o serviço.",
+        variant: "destructive",
       });
-    } else {
-      // Create new service
-      const newService: Service = {
-        id: `service-${Date.now()}`,
-        name: formData.name,
-        description: formData.description,
-        price: parseFloat(formData.price),
-        duration: parseInt(formData.duration),
-        image: formData.image || undefined,
-      };
-      
-      setServices((prev) => [...prev, newService]);
-      
-      toast({
-        title: "Serviço criado",
-        description: "O novo serviço foi adicionado com sucesso.",
-      });
+    } finally {
+      setIsSubmitting(false);
     }
-    
-    // Reset form and close dialog
-    resetForm();
-    setIsOpen(false);
   };
 
   return (
@@ -180,108 +195,108 @@ export default function ServiceManagement() {
             <h1 className="text-2xl font-bold text-salon-800">Serviços</h1>
             <p className="text-muted-foreground">Gerencie os serviços oferecidos pelo seu salão</p>
           </div>
-          <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-            <DialogTrigger asChild>
+          <CustomDialog
+            open={isOpen}
+            onOpenChange={handleOpenChange}
+            trigger={
               <Button>
                 <Plus className="mr-2 h-4 w-4" />
                 Novo Serviço
               </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[550px]">
-              <form onSubmit={handleSubmit}>
-                <DialogHeader>
-                  <DialogTitle>
-                    {isEditing ? "Editar Serviço" : "Novo Serviço"}
-                  </DialogTitle>
-                  <DialogDescription>
-                    Preencha os detalhes do serviço que você oferece. Clique em salvar quando terminar.
-                  </DialogDescription>
-                </DialogHeader>
-                
-                <div className="space-y-4 py-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Nome do serviço*</Label>
-                    <Input
-                      id="name"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleInputChange}
-                      placeholder="Ex: Corte Feminino"
-                      required
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="description">Descrição*</Label>
-                    <Textarea
-                      id="description"
-                      name="description"
-                      value={formData.description}
-                      onChange={handleInputChange}
-                      placeholder="Descreva os detalhes do serviço"
-                      rows={3}
-                      required
-                    />
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="price">Preço (R$)*</Label>
-                      <Input
-                        id="price"
-                        name="price"
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={formData.price}
-                        onChange={handleInputChange}
-                        placeholder="0.00"
-                        required
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="duration">Duração (minutos)*</Label>
-                      <Input
-                        id="duration"
-                        name="duration"
-                        type="number"
-                        min="5"
-                        step="5"
-                        value={formData.duration}
-                        onChange={handleInputChange}
-                        placeholder="60"
-                        required
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="image">URL da imagem</Label>
-                    <Input
-                      id="image"
-                      name="image"
-                      value={formData.image}
-                      onChange={handleInputChange}
-                      placeholder="https://exemplo.com/imagem.jpg"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Adicione uma URL de imagem para mostrar seu serviço.
-                    </p>
-                  </div>
+            }
+            title={isEditing ? "Editar Serviço" : "Novo Serviço"}
+            description="Preencha os detalhes do serviço que você oferece. Clique em salvar quando terminar."
+            footer={
+              <>
+                <Button type="button" variant="outline" onClick={() => handleOpenChange(false)} disabled={isSubmitting}>
+                  Cancelar
+                </Button>
+                <Button onClick={handleSubmit} disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      {isEditing ? "Salvando..." : "Criando..."}
+                    </>
+                  ) : (
+                    isEditing ? "Salvar Alterações" : "Criar Serviço"
+                  )}
+                </Button>
+              </>
+            }
+          >
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Nome do serviço*</Label>
+                <Input
+                  id="name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  placeholder="Ex: Corte Feminino"
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="description">Descrição*</Label>
+                <Textarea
+                  id="description"
+                  name="description"
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  placeholder="Descreva os detalhes do serviço"
+                  rows={3}
+                  required
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="price">Preço (R$)*</Label>
+                  <Input
+                    id="price"
+                    name="price"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={formData.price}
+                    onChange={handleInputChange}
+                    placeholder="0.00"
+                    required
+                  />
                 </div>
                 
-                <DialogFooter>
-                  <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
-                    Cancelar
-                  </Button>
-                  <Button type="submit">
-                    {isEditing ? "Salvar Alterações" : "Criar Serviço"}
-                  </Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
+                <div className="space-y-2">
+                  <Label htmlFor="duration">Duração (minutos)*</Label>
+                  <Input
+                    id="duration"
+                    name="duration"
+                    type="number"
+                    min="5"
+                    step="5"
+                    value={formData.duration}
+                    onChange={handleInputChange}
+                    placeholder="60"
+                    required
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="image">URL da imagem</Label>
+                <Input
+                  id="image"
+                  name="image"
+                  value={formData.image}
+                  onChange={handleInputChange}
+                  placeholder="https://exemplo.com/imagem.jpg"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Adicione uma URL de imagem para mostrar seu serviço.
+                </p>
+              </div>
+            </div>
+          </CustomDialog>
         </div>
         
         <Tabs defaultValue="all">

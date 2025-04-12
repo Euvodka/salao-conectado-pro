@@ -23,64 +23,6 @@ import ProfessionalProfile from "@/pages/professional/ProfessionalProfile";
 // Common pages
 import NotFound from "@/pages/NotFound";
 
-// Skeleton components to make the app functional
-// These will be replaced with actual implementations later
-const ClientSavedPlaceholder = () => (
-  <div className="container mx-auto p-4">
-    <h1 className="text-2xl font-bold mb-4">Posts Salvos</h1>
-    <p>Aqui você encontrará seus posts salvos.</p>
-  </div>
-);
-
-const ClientMessagesPlaceholder = () => (
-  <div className="container mx-auto p-4">
-    <h1 className="text-2xl font-bold mb-4">Mensagens</h1>
-    <p>Suas conversas com profissionais aparecerão aqui.</p>
-  </div>
-);
-
-const ClientSearchPlaceholder = () => (
-  <div className="container mx-auto p-4">
-    <h1 className="text-2xl font-bold mb-4">Pesquisar</h1>
-    <p>Busque por profissionais e serviços.</p>
-  </div>
-);
-
-const ClientProfilePlaceholder = () => (
-  <div className="container mx-auto p-4">
-    <h1 className="text-2xl font-bold mb-4">Meu Perfil</h1>
-    <p>Gerencie suas informações pessoais.</p>
-  </div>
-);
-
-const ProfessionalCalendarPlaceholder = () => (
-  <div className="container mx-auto p-4">
-    <h1 className="text-2xl font-bold mb-4">Agenda</h1>
-    <p>Gerencie seus agendamentos e horários disponíveis.</p>
-  </div>
-);
-
-const ProfessionalFeedPlaceholder = () => (
-  <div className="container mx-auto p-4">
-    <h1 className="text-2xl font-bold mb-4">Feed</h1>
-    <p>Veja publicações de outros profissionais e faça suas próprias publicações.</p>
-  </div>
-);
-
-const ProfessionalMessagesPlaceholder = () => (
-  <div className="container mx-auto p-4">
-    <h1 className="text-2xl font-bold mb-4">Mensagens e Notificações</h1>
-    <p>Acompanhe suas mensagens e solicitações de agendamento.</p>
-  </div>
-);
-
-const ProfessionalProfilePlaceholder = () => (
-  <div className="container mx-auto p-4">
-    <h1 className="text-2xl font-bold mb-4">Meu Perfil</h1>
-    <p>Gerencie seu perfil profissional, publicações e reputação.</p>
-  </div>
-);
-
 export default function AppRoutes() {
   const { user, isAuthenticated, isLoading } = useAuth();
 
@@ -122,7 +64,7 @@ export default function AppRoutes() {
         path="/client/saved"
         element={
           isAuthenticated && user?.role === "client" ? (
-            <ClientSavedPlaceholder />
+            <ClientSaved />
           ) : (
             <Navigate to="/" replace />
           )
@@ -132,7 +74,7 @@ export default function AppRoutes() {
         path="/client/messages"
         element={
           isAuthenticated && user?.role === "client" ? (
-            <ClientMessagesPlaceholder />
+            <ClientMessages />
           ) : (
             <Navigate to="/" replace />
           )
@@ -142,7 +84,7 @@ export default function AppRoutes() {
         path="/client/search"
         element={
           isAuthenticated && user?.role === "client" ? (
-            <ClientSearchPlaceholder />
+            <ClientSearch />
           ) : (
             <Navigate to="/" replace />
           )
@@ -152,7 +94,7 @@ export default function AppRoutes() {
         path="/client/profile"
         element={
           isAuthenticated && user?.role === "client" ? (
-            <ClientProfilePlaceholder />
+            <ClientProfile />
           ) : (
             <Navigate to="/" replace />
           )
@@ -174,7 +116,7 @@ export default function AppRoutes() {
         path="/professional/calendar"
         element={
           isAuthenticated && user?.role === "professional" ? (
-            <ProfessionalCalendarPlaceholder />
+            <ProfessionalCalendar />
           ) : (
             <Navigate to="/" replace />
           )
@@ -184,7 +126,7 @@ export default function AppRoutes() {
         path="/professional/feed"
         element={
           isAuthenticated && user?.role === "professional" ? (
-            <ProfessionalFeedPlaceholder />
+            <ProfessionalFeed />
           ) : (
             <Navigate to="/" replace />
           )
@@ -194,7 +136,7 @@ export default function AppRoutes() {
         path="/professional/messages"
         element={
           isAuthenticated && user?.role === "professional" ? (
-            <ProfessionalMessagesPlaceholder />
+            <ProfessionalMessages />
           ) : (
             <Navigate to="/" replace />
           )
@@ -214,7 +156,7 @@ export default function AppRoutes() {
         path="/professional/profile"
         element={
           isAuthenticated && user?.role === "professional" ? (
-            <ProfessionalProfilePlaceholder />
+            <ProfessionalProfile />
           ) : (
             <Navigate to="/" replace />
           )

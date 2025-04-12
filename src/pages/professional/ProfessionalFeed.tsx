@@ -4,7 +4,7 @@ import { ProfessionalNavbar } from "@/components/professional/ProfessionalNavbar
 import { PostCard } from "@/components/feed/PostCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { CustomDialog } from "@/components/ui/custom-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -88,9 +88,7 @@ export default function ProfessionalFeed() {
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  const handleSubmit = async () => {
     if (!newPost.content.trim()) {
       toast({
         title: "Campo obrigatório",
@@ -111,7 +109,7 @@ export default function ProfessionalFeed() {
         id: `new-${Date.now()}`,
         professionalId: user?.id || "1",
         professionalName: user?.name || "Profissional",
-        professionalImage: user?.profileImage,
+        professionalImage: user?.profileImage || "",
         content: newPost.content,
         image: newPost.imageUrl || "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?q=80&w=1470&auto=format&fit=crop",
         likes: 0,
@@ -153,8 +151,10 @@ export default function ProfessionalFeed() {
         {/* Create post card */}
         <Card className="mb-6">
           <CardContent className="pt-6">
-            <Dialog open={isOpen} onOpenChange={setIsOpen}>
-              <DialogTrigger asChild>
+            <CustomDialog
+              open={isOpen}
+              onOpenChange={setIsOpen}
+              trigger={
                 <div className="flex items-center space-x-3 cursor-pointer p-3 rounded-md hover:bg-gray-50">
                   <div className="flex-shrink-0">
                     <Image className="h-6 w-6 text-salon-600" />
@@ -164,73 +164,66 @@ export default function ProfessionalFeed() {
                   </div>
                   <Button>Criar Post</Button>
                 </div>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[550px]">
-                <form onSubmit={handleSubmit}>
-                  <DialogHeader>
-                    <DialogTitle>Nova Publicação</DialogTitle>
-                    <DialogDescription>
-                      Compartilhe seu trabalho e destaque seus serviços para atrair novos clientes.
-                    </DialogDescription>
-                  </DialogHeader>
-                  
-                  <div className="space-y-4 py-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="content">Descrição*</Label>
-                      <Textarea
-                        id="content"
-                        name="content"
-                        value={newPost.content}
-                        onChange={handleInputChange}
-                        placeholder="Descreva o seu trabalho..."
-                        rows={4}
-                        required
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="imageUrl">URL da imagem</Label>
-                      <Input
-                        id="imageUrl"
-                        name="imageUrl"
-                        value={newPost.imageUrl}
-                        onChange={handleInputChange}
-                        placeholder="https://exemplo.com/imagem.jpg"
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        Cole o link da imagem ou suba uma foto do seu trabalho.
-                      </p>
-                    </div>
-                    
-                    <div className="bg-gray-50 border border-dashed border-gray-200 rounded-md p-6 text-center">
-                      <Camera className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                      <p className="text-sm text-muted-foreground mb-2">
-                        Arraste e solte uma imagem ou clique para selecionar
-                      </p>
-                      <Button variant="outline" type="button" size="sm">
-                        Selecionar Arquivo
-                      </Button>
-                    </div>
-                  </div>
-                  
-                  <DialogFooter>
-                    <Button type="button" variant="outline" onClick={() => setIsOpen(false)} disabled={isSubmitting}>
-                      Cancelar
-                    </Button>
-                    <Button type="submit" disabled={isSubmitting}>
-                      {isSubmitting ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Publicando...
-                        </>
-                      ) : (
-                        "Publicar"
-                      )}
-                    </Button>
-                  </DialogFooter>
-                </form>
-              </DialogContent>
-            </Dialog>
+              }
+              title="Nova Publicação"
+              description="Compartilhe seu trabalho e destaque seus serviços para atrair novos clientes."
+              footer={
+                <>
+                  <Button type="button" variant="outline" onClick={() => setIsOpen(false)} disabled={isSubmitting}>
+                    Cancelar
+                  </Button>
+                  <Button onClick={handleSubmit} disabled={isSubmitting}>
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Publicando...
+                      </>
+                    ) : (
+                      "Publicar"
+                    )}
+                  </Button>
+                </>
+              }
+            >
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="content">Descrição*</Label>
+                  <Textarea
+                    id="content"
+                    name="content"
+                    value={newPost.content}
+                    onChange={handleInputChange}
+                    placeholder="Descreva o seu trabalho..."
+                    rows={4}
+                    required
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="imageUrl">URL da imagem</Label>
+                  <Input
+                    id="imageUrl"
+                    name="imageUrl"
+                    value={newPost.imageUrl}
+                    onChange={handleInputChange}
+                    placeholder="https://exemplo.com/imagem.jpg"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Cole o link da imagem ou suba uma foto do seu trabalho.
+                  </p>
+                </div>
+                
+                <div className="bg-gray-50 border border-dashed border-gray-200 rounded-md p-6 text-center">
+                  <Camera className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Arraste e solte uma imagem ou clique para selecionar
+                  </p>
+                  <Button variant="outline" type="button" size="sm">
+                    Selecionar Arquivo
+                  </Button>
+                </div>
+              </div>
+            </CustomDialog>
           </CardContent>
         </Card>
 
