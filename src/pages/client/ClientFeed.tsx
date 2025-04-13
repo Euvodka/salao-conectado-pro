@@ -146,7 +146,7 @@ export default function ClientFeed() {
                 key={post.id} 
                 post={post} 
                 userRole="client" 
-                onSave={handleSavePost}
+                onSave={(post) => handleSavePost(post)}
               />
             ))
           )}
