@@ -17,20 +17,25 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  // Default role when using the direct login page
   const [role, setRole] = useState<UserRole>("client");
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!email || !senha) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Por favor, preencha todos os campos.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setIsLoading(true);
 
     try {
       await login(email, senha, role);
-      // The navigation is handled in the login function
-      toast({
-        title: "Login realizado",
-        description: "Bem-vindo de volta!",
-      });
+      // The navigation is handled in the login function based on the user's role
     } catch (error: any) {
       console.error("Login error:", error);
       toast({
@@ -41,11 +46,6 @@ export default function Login() {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  // Simple role toggle for direct login page
-  const toggleRole = () => {
-    setRole(role === "client" ? "professional" : "client");
   };
 
   return (
@@ -83,7 +83,7 @@ export default function Login() {
               <Label htmlFor="role">Tipo de usuário</Label>
               <Button 
                 type="button" 
-                onClick={toggleRole} 
+                onClick={() => setRole(role === "client" ? "professional" : "client")} 
                 variant="outline" 
                 className="w-full"
               >

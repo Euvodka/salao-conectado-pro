@@ -168,7 +168,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       if (authError) {
         console.error('Authentication error:', authError);
-        throw new Error("E-mail ou senha incorretos. Verifique suas credenciais.");
+        throw new Error(authError.message || "E-mail ou senha incorretos. Verifique suas credenciais.");
       }
 
       if (!authData.user) {
@@ -176,9 +176,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         throw new Error('Erro ao autenticar. Por favor, tente novamente.');
       }
 
-      console.log('Authentication successful, checking user role');
+      console.log('Authentication successful, checking user data');
       
-      // Then verify the user exists in our users table with the correct role
+      // Verify the user exists in our users table
       const { data: userData, error: userError } = await supabase
         .from('users')
         .select('*')
@@ -187,23 +187,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       if (userError) {
         console.error('Error fetching user data:', userError);
-        // If user doesn't exist with that role, sign out and throw error
         await supabase.auth.signOut();
-        throw new Error(`Usuário não encontrado. Por favor, verifique suas credenciais.`);
+        throw new Error('Usuário não encontrado. Por favor, verifique suas credenciais.');
       }
       
       if (!userData) {
         console.error('No user data found');
         await supabase.auth.signOut();
-        throw new Error(`Usuário não encontrado. Por favor, verifique suas credenciais.`);
+        throw new Error('Usuário não encontrado. Por favor, verifique suas credenciais.');
       }
       
       // Get user role from database
       const userRole = userData.tipo === 'cliente' ? 'client' : 'professional';
-      console.log(`User role from database: ${userRole}, requested role: ${role}`);
+      console.log(`User role from database: ${userRole}`);
       
-      // Redirect based on actual user role, not requested role
-      // This is important for security - users can only access their actual role
       setUser({
         id: authData.user.id,
         name: userData.nome,
@@ -214,12 +211,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         profileImage: userData.avatar_url || undefined
       });
 
-      // Redirect based on actual role, not the role they tried to login with
+      // Redirect based on role
       navigate(userRole === 'client' ? '/client' : '/professional');
       
       toast({
         title: "Login realizado com sucesso!",
-        description: "Bem-vindo(a) de volta.",
+        description: `Bem-vindo(a) de volta, ${userData.nome}.`,
       });
     } catch (error: any) {
       console.error('Login error:', error);
