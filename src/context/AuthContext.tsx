@@ -1,26 +1,8 @@
-// src/contexts/AuthContext.tsx
-import { createContext, useContext, useEffect, useState } from 'react';
-import { supabase } from '../lib/supabaseClient';
 
-const AuthContext = createContext(null);
+// Este é um arquivo temporário para redirecionar importações
+// para o caminho correto. Será necessário atualizar todas as importações
+// para usar o novo caminho: '@/contexts/AuthContext'
 
-export const AuthProvider = ({ children }) => {
-  const [session, setSession] = useState(null);
+import { useAuth, AuthProvider } from '@/contexts/AuthContext';
 
-  useEffect(() => {
-    const currentSession = supabase.auth.session();
-    setSession(currentSession);
-
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => {
-      setSession(newSession);
-    });
-
-    return () => {
-      listener?.unsubscribe();
-    };
-  }, []);
-
-  return <AuthContext.Provider value={{ session }}>{children}</AuthContext.Provider>;
-};
-
-export const useAuth = () => useContext(AuthContext);
+export { useAuth, AuthProvider };
