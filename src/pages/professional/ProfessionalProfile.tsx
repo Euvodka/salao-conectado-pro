@@ -1,3 +1,4 @@
+
 import { useState, useRef } from "react";
 import { ProfessionalNavbar } from "@/components/professional/ProfessionalNavbar";
 import { Button } from "@/components/ui/button";
@@ -13,7 +14,7 @@ import { ServiceCard } from "@/components/feed/ServiceCard";
 import { PostCard } from "@/components/feed/PostCard";
 import { CustomDialog } from "@/components/ui/custom-dialog";
 import { Pencil, LogOut, Star, Link as LinkIcon, AlertCircle, Camera, Loader2, Plus } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
 import { Service, Post } from "@/types";
 

@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useLocation, Link } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/context/AuthContext";
 import { 
   Popover,
   PopoverContent,

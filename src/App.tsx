@@ -1,186 +1,25 @@
-
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { useAuth } from './contexts/AuthContext';
+// src/App.tsx
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import PrivateRoute from './components/PrivateRoute';
+import Dashboard from './pages/Dashboard';
 import Login from './pages/auth/Login';
-import LandingPage from './pages/LandingPage';
-
-// Client pages
-import ClientFeed from "@/pages/client/ClientFeed";
-import ClientSaved from "@/pages/client/ClientSaved";
-import ClientMessages from "@/pages/client/ClientMessages";
-import ClientSearch from "@/pages/client/ClientSearch";
-import ClientProfile from "@/pages/client/ClientProfile";
-
-// Professional pages
-import ProfessionalDashboard from "@/pages/professional/ProfessionalDashboard";
-import ProfessionalCalendar from "@/pages/professional/ProfessionalCalendar";
-import ProfessionalFeed from "@/pages/professional/ProfessionalFeed";
-import ProfessionalMessages from "@/pages/professional/ProfessionalMessages";
-import ServiceManagement from "@/pages/professional/ServiceManagement";
-import ProfessionalProfile from "@/pages/professional/ProfessionalProfile";
-import ProfessionalClientView from "@/pages/professional/ProfessionalClientView";
-
-// Common pages
-import NotFound from "@/pages/NotFound";
 
 function App() {
-  const { isAuthenticated, user, isLoading } = useAuth();
-
-  // Enquanto a autenticação está carregando, mostra um loader
-  if (isLoading) {
-    return <div className="flex items-center justify-center h-screen">Carregando...</div>;
-  }
-
   return (
-    <Routes>
-      {/* Página inicial pública */}
-      <Route
-        path="/"
-        element={
-          isAuthenticated ? (
-            user?.role === "client" ? (
-              <Navigate to="/client" replace />
-            ) : (
-              <Navigate to="/professional" replace />
-            )
-          ) : (
-            <LandingPage />
-          )
-        }
-      />
-
-      {/* Rota de login */}
-      <Route path="/auth/login" element={<Login />} />
-
-      {/* Rotas de cliente */}
-      <Route
-        path="/client"
-        element={
-          isAuthenticated && user?.role === "client" ? (
-            <ClientFeed />
-          ) : (
-            <Navigate to="/" replace />
-          )
-        }
-      />
-      <Route
-        path="/client/saved"
-        element={
-          isAuthenticated && user?.role === "client" ? (
-            <ClientSaved />
-          ) : (
-            <Navigate to="/" replace />
-          )
-        }
-      />
-      <Route
-        path="/client/messages"
-        element={
-          isAuthenticated && user?.role === "client" ? (
-            <ClientMessages />
-          ) : (
-            <Navigate to="/" replace />
-          )
-        }
-      />
-      <Route
-        path="/client/search"
-        element={
-          isAuthenticated && user?.role === "client" ? (
-            <ClientSearch />
-          ) : (
-            <Navigate to="/" replace />
-          )
-        }
-      />
-      <Route
-        path="/client/profile"
-        element={
-          isAuthenticated && user?.role === "client" ? (
-            <ClientProfile />
-          ) : (
-            <Navigate to="/" replace />
-          )
-        }
-      />
-
-      {/* Rotas de profissional */}
-      <Route
-        path="/professional"
-        element={
-          isAuthenticated && user?.role === "professional" ? (
-            <ProfessionalDashboard />
-          ) : (
-            <Navigate to="/" replace />
-          )
-        }
-      />
-      <Route
-        path="/professional/calendar"
-        element={
-          isAuthenticated && user?.role === "professional" ? (
-            <ProfessionalCalendar />
-          ) : (
-            <Navigate to="/" replace />
-          )
-        }
-      />
-      <Route
-        path="/professional/feed"
-        element={
-          isAuthenticated && user?.role === "professional" ? (
-            <ProfessionalFeed />
-          ) : (
-            <Navigate to="/" replace />
-          )
-        }
-      />
-      <Route
-        path="/professional/messages"
-        element={
-          isAuthenticated && user?.role === "professional" ? (
-            <ProfessionalMessages />
-          ) : (
-            <Navigate to="/" replace />
-          )
-        }
-      />
-      <Route
-        path="/professional/services"
-        element={
-          isAuthenticated && user?.role === "professional" ? (
-            <ServiceManagement />
-          ) : (
-            <Navigate to="/" replace />
-          )
-        }
-      />
-      <Route
-        path="/professional/profile"
-        element={
-          isAuthenticated && user?.role === "professional" ? (
-            <ProfessionalProfile />
-          ) : (
-            <Navigate to="/" replace />
-          )
-        }
-      />
-      
-      {/* Perfil de profissional visualizado por clientes - rota pública com algumas restrições */}
-      <Route
-        path="/professionals/:id"
-        element={
-          isAuthenticated ? (
-            <ProfessionalClientView />
-          ) : (
-            <Navigate to="/" replace />
-          )
-        }
-      />
-
-      {/* Página 404 */}
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+    <Router>
+      <Routes>
+        <Route path="/auth/login" element={<Login />} />
+        <Route
+          path="/dashboard"
+          element={
+            <PrivateRoute>
+              <Dashboard />
+            </PrivateRoute>
+          }
+        />
+        {/* Outras rotas */}
+      </Routes>
+    </Router>
   );
 }
 
