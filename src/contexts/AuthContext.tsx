@@ -240,18 +240,40 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const register = async (userData: UserRegistrationData, password: string) => {
     try {
+      console.log('Registering user with data:', userData);
+      
       // First register with Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: userData.email,
         password: password,
       });
 
-      if (authError) throw authError;
+      if (authError) {
+        console.error('Auth error during registration:', authError);
+        throw authError;
+      }
 
       if (!authData.user) {
+        console.error('No user returned from registration');
         throw new Error('No user returned from registration');
       }
 
+      // Prepare user profile data
+      // Importante: Garantir que endereço e CEP não sejam nulos para qualquer tipo de usuário
+      let endereco = '';
+      let cep = '';
+      
+      if (userData.role === 'professional' && userData.address) {
+        endereco = `${userData.address.street}, ${userData.address.number}`;
+        cep = userData.address.zipCode;
+      } else if (userData.role === 'client') {
+        // Para clientes, definir valores padrão para endereço e CEP
+        endereco = 'Endereço não informado';
+        cep = '00000-000';
+      }
+      
+      console.log('Inserting user profile with address:', endereco, 'cep:', cep);
+      
       // Then create the user profile in our users table
       const { error: insertError } = await supabase.from('users').insert([
         {
@@ -261,13 +283,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           telefone: userData.phone,
           cpf_cnpj: userData.role === 'client' ? userData.cpf : userData.cnpj,
           tipo: userData.role === 'client' ? 'cliente' : 'profissional',
-          endereco: userData.role === 'professional' ? `${userData.address?.street}, ${userData.address?.number}` : null,
-          cep: userData.role === 'professional' ? userData.address?.zipCode : null,
+          endereco: endereco,
+          cep: cep,
           criado_em: new Date().toISOString(),
         },
       ]);
 
       if (insertError) {
+        console.error('Insert error during profile creation:', insertError);
         // If profile creation fails, we should clean up the auth user
         await supabase.auth.signOut();
         throw insertError;
