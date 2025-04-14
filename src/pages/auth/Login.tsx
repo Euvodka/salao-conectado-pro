@@ -1,47 +1,51 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { UserRole } from "@/types";
 
 export default function Login() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { login } = useAuth();
 
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  // Default role when using the direct login page
+  const [role, setRole] = useState<UserRole>("client");
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: email,
-      password: senha,
-    });
-
-    if (error || !data.user) {
+    try {
+      await login(email, senha, role);
+      // The navigation is handled in the login function
+      toast({
+        title: "Login realizado",
+        description: "Bem-vindo de volta!",
+      });
+    } catch (error: any) {
+      console.error("Login error:", error);
       toast({
         title: "Erro de login",
-        description: "E-mail ou senha incorretos. Verifique suas credenciais.",
+        description: error.message || "E-mail ou senha incorretos. Verifique suas credenciais.",
         variant: "destructive",
       });
+    } finally {
       setIsLoading(false);
-      return;
     }
+  };
 
-    // Redireciona para a página principal ou dashboard
-    navigate("/");
-    toast({
-      title: "Login realizado",
-      description: "Bem-vindo de volta!",
-    });
-
-    setIsLoading(false);
+  // Simple role toggle for direct login page
+  const toggleRole = () => {
+    setRole(role === "client" ? "professional" : "client");
   };
 
   return (
@@ -74,6 +78,20 @@ export default function Login() {
                 onChange={(e) => setSenha(e.target.value)}
                 required
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="role">Tipo de usuário</Label>
+              <Button 
+                type="button" 
+                onClick={toggleRole} 
+                variant="outline" 
+                className="w-full"
+              >
+                {role === "client" ? "Entrar como Cliente" : "Entrar como Profissional"}
+              </Button>
+              <p className="text-xs text-gray-500 mt-1">
+                Clique no botão acima para alternar entre cliente e profissional
+              </p>
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-2">

@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -169,12 +168,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       if (authError) {
         console.error('Authentication error:', authError);
-        throw authError;
+        throw new Error("E-mail ou senha incorretos. Verifique suas credenciais.");
       }
 
       if (!authData.user) {
         console.error('No user returned from authentication');
-        throw new Error('No user returned from authentication');
+        throw new Error('Erro ao autenticar. Por favor, tente novamente.');
       }
 
       console.log('Authentication successful, checking user role');
@@ -199,17 +198,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         throw new Error(`Usuário não encontrado. Por favor, verifique suas credenciais.`);
       }
       
-      // Verify the user has the correct role
+      // Get user role from database
       const userRole = userData.tipo === 'cliente' ? 'client' : 'professional';
-      if (userRole !== role) {
-        console.error(`Role mismatch. Expected: ${role}, Got: ${userRole}`);
-        await supabase.auth.signOut();
-        throw new Error(`Você está tentando entrar como ${role === 'client' ? 'cliente' : 'profissional'}, mas sua conta está registrada como ${userRole === 'client' ? 'cliente' : 'profissional'}.`);
-      }
-
-      console.log('User role verified, setting user data');
+      console.log(`User role from database: ${userRole}, requested role: ${role}`);
       
-      // Set user data after successful login
+      // Redirect based on actual user role, not requested role
+      // This is important for security - users can only access their actual role
       setUser({
         id: authData.user.id,
         name: userData.nome,
@@ -220,8 +214,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         profileImage: userData.avatar_url || undefined
       });
 
-      // Redirect based on role
-      navigate(role === 'client' ? '/client' : '/professional');
+      // Redirect based on actual role, not the role they tried to login with
+      navigate(userRole === 'client' ? '/client' : '/professional');
       
       toast({
         title: "Login realizado com sucesso!",
@@ -229,11 +223,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
     } catch (error: any) {
       console.error('Login error:', error);
-      toast({
-        title: "Erro no login",
-        description: error.message || "Verifique suas credenciais e tente novamente.",
-        variant: "destructive",
-      });
       throw error;
     }
   };
