@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { PostCard } from "@/components/feed/PostCard";
 import { ClientNavbar } from "@/components/client/ClientNavbar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { Post } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 

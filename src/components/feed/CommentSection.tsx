@@ -1,11 +1,10 @@
-
 import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Send } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 type Comment = {
   id: string;

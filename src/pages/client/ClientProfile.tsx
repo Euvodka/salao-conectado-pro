@@ -18,7 +18,7 @@ import {
   Clock,
   MapPin
 } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
 // Mock appointments data with updated type
