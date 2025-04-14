@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { UserRole } from "@/types";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
 
 interface LoginFormProps {
@@ -36,17 +36,10 @@ export function LoginForm({ role, onBack }: LoginFormProps) {
     try {
       setIsLoading(true);
       await login(email, password, role);
-      toast({
-        title: "Login realizado com sucesso!",
-        description: "Bem-vindo(a) de volta.",
-      });
+      // Note: No need to show toast or redirect here as it's handled in the login function
     } catch (error) {
-      toast({
-        title: "Erro no login",
-        description: "Verifique suas credenciais e tente novamente.",
-        variant: "destructive",
-      });
-      console.error(error);
+      // Error is handled by the login function, no need to handle it here
+      console.error("Login error caught in form:", error);
     } finally {
       setIsLoading(false);
     }

@@ -56,6 +56,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
+        console.log("Auth state change event:", event);
         setSession(newSession);
         
         if (newSession?.user) {
@@ -67,25 +68,39 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               .eq('id', newSession.user.id)
               .single();
 
-            if (userError) throw userError;
+            if (userError) {
+              console.error('Error fetching user data:', userError);
+              throw userError;
+            }
 
             if (userData) {
+              console.log("User data found:", userData);
               setUser({
                 id: newSession.user.id,
                 name: userData.nome,
                 email: userData.email,
                 role: userData.tipo === 'cliente' ? 'client' : 'professional',
                 username: userData.email.split('@')[0], // Fallback username
+                phone: userData.telefone,
                 profileImage: userData.avatar_url || undefined
               });
             } else {
+              console.log("No user data found despite valid session");
               setUser(null);
+              // If we have a session but no user data, log the user out
+              if (event !== 'SIGNED_OUT') {
+                await supabase.auth.signOut();
+              }
             }
           } catch (error) {
-            console.error('Error fetching user data:', error);
+            console.error('Error in auth state change:', error);
             setUser(null);
+            if (event !== 'SIGNED_OUT') {
+              await supabase.auth.signOut();
+            }
           }
         } else {
+          console.log("No session or user found");
           setUser(null);
         }
       }
@@ -93,6 +108,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     // THEN check for existing session
     supabase.auth.getSession().then(async ({ data: { session: currentSession } }) => {
+      console.log("Initial session check:", currentSession ? "Session exists" : "No session");
       setSession(currentSession);
 
       if (currentSession?.user) {
@@ -104,20 +120,32 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             .eq('id', currentSession.user.id)
             .single();
 
-          if (userError) throw userError;
+          if (userError) {
+            console.error('Error fetching initial user data:', userError);
+            throw userError;
+          }
 
           if (userData) {
+            console.log("Initial user data found:", userData);
             setUser({
               id: currentSession.user.id,
               name: userData.nome,
               email: userData.email,
               role: userData.tipo === 'cliente' ? 'client' : 'professional',
               username: userData.email.split('@')[0], // Fallback username
+              phone: userData.telefone,
               profileImage: userData.avatar_url || undefined
             });
+          } else {
+            console.log("No initial user data found despite valid session");
+            // If we have a session but no user data, log the user out
+            await supabase.auth.signOut();
+            setUser(null);
           }
         } catch (error) {
-          console.error('Error fetching user data:', error);
+          console.error('Error in initial session check:', error);
+          await supabase.auth.signOut();
+          setUser(null);
         }
       }
       
@@ -131,39 +159,64 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const login = async (email: string, password: string, role: UserRole) => {
     try {
+      console.log(`Attempting login with email: ${email}, role: ${role}`);
+      
       // First authenticate with Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password
       });
 
-      if (authError) throw authError;
+      if (authError) {
+        console.error('Authentication error:', authError);
+        throw authError;
+      }
 
       if (!authData.user) {
+        console.error('No user returned from authentication');
         throw new Error('No user returned from authentication');
       }
 
+      console.log('Authentication successful, checking user role');
+      
       // Then verify the user exists in our users table with the correct role
       const { data: userData, error: userError } = await supabase
         .from('users')
         .select('*')
         .eq('id', authData.user.id)
-        .eq('tipo', role === 'client' ? 'cliente' : 'profissional')
         .single();
 
-      if (userError || !userData) {
+      if (userError) {
+        console.error('Error fetching user data:', userError);
         // If user doesn't exist with that role, sign out and throw error
         await supabase.auth.signOut();
-        throw new Error(`Usuário não encontrado como ${role === 'client' ? 'cliente' : 'profissional'}`);
+        throw new Error(`Usuário não encontrado. Por favor, verifique suas credenciais.`);
+      }
+      
+      if (!userData) {
+        console.error('No user data found');
+        await supabase.auth.signOut();
+        throw new Error(`Usuário não encontrado. Por favor, verifique suas credenciais.`);
+      }
+      
+      // Verify the user has the correct role
+      const userRole = userData.tipo === 'cliente' ? 'client' : 'professional';
+      if (userRole !== role) {
+        console.error(`Role mismatch. Expected: ${role}, Got: ${userRole}`);
+        await supabase.auth.signOut();
+        throw new Error(`Você está tentando entrar como ${role === 'client' ? 'cliente' : 'profissional'}, mas sua conta está registrada como ${userRole === 'client' ? 'cliente' : 'profissional'}.`);
       }
 
+      console.log('User role verified, setting user data');
+      
       // Set user data after successful login
       setUser({
         id: authData.user.id,
         name: userData.nome,
         email: userData.email,
-        role: userData.tipo === 'cliente' ? 'client' : 'professional',
+        role: userRole,
         username: userData.email.split('@')[0],
+        phone: userData.telefone,
         profileImage: userData.avatar_url || undefined
       });
 
