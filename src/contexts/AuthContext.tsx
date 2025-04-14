@@ -22,6 +22,7 @@ interface UserInfo {
   email: string;
   role: UserRole;
   username: string;
+  phone?: string;
   profileImage?: string;
 }
 
