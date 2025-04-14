@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -8,16 +8,22 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { UserRole } from "@/types";
+import { Loader2 } from "lucide-react";
 
 export default function Login() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { login } = useAuth();
+  const { login, isAuthenticated, user } = useAuth();
 
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [role, setRole] = useState<UserRole>("client");
+
+  // If already authenticated, redirect to appropriate dashboard
+  if (isAuthenticated && user) {
+    return <Navigate to={user.role === "client" ? "/client" : "/professional"} replace />;
+  }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,7 +102,12 @@ export default function Login() {
           </CardContent>
           <CardFooter className="flex flex-col gap-2">
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Entrando..." : "Entrar"}
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Entrando...
+                </>
+              ) : "Entrar"}
             </Button>
             <Button 
               type="button" 
