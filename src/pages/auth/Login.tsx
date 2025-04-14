@@ -6,12 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
 
 export default function Login() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { login } = useAuth();
 
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
@@ -21,46 +19,29 @@ export default function Login() {
     e.preventDefault();
     setIsLoading(true);
 
-    try {
-      // Verifica se é cliente ou profissional
-      const { data: userData, error: userError } = await supabase
-        .from("users")
-        .select("tipo")
-        .eq("email", email)
-        .single();
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email,
+      password: senha,
+    });
 
-      if (userError || !userData) {
-        toast({
-          title: "Erro",
-          description: "E-mail não encontrado. Verifique suas credenciais.",
-          variant: "destructive",
-        });
-        setIsLoading(false);
-        return;
-      }
-
-      // Usa o login do contexto de autenticação
-      await login(
-        email, 
-        senha, 
-        userData.tipo === "cliente" ? "client" : "professional"
-      );
-      
-      // Redireciona com base no tipo de usuário
-      if (userData.tipo === "cliente") {
-        navigate("/client");
-      } else if (userData.tipo === "profissional") {
-        navigate("/professional");
-      }
-    } catch (error: any) {
+    if (error || !data.user) {
       toast({
-        title: "Erro de autenticação",
-        description: error.message || "E-mail ou senha incorretos.",
+        title: "Erro de login",
+        description: "E-mail ou senha incorretos. Verifique suas credenciais.",
         variant: "destructive",
       });
-    } finally {
       setIsLoading(false);
+      return;
     }
+
+    // Redireciona para a página principal ou dashboard
+    navigate("/");
+    toast({
+      title: "Login realizado",
+      description: "Bem-vindo de volta!",
+    });
+
+    setIsLoading(false);
   };
 
   return (
