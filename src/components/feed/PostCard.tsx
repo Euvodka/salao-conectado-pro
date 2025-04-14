@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -15,7 +16,7 @@ interface PostCardProps {
   post: Post;
   userRole: 'client' | 'professional';
   isSaved?: boolean;
-  onSave?: (post: Post) => void;
+  onSave?: () => void;
   onCommentClick?: () => void;
 }
 
@@ -83,6 +84,7 @@ export function PostCard({ post, userRole, isSaved = false, onSave, onCommentCli
   return (
     <Card>
       <CardContent className="pt-6">
+        {/* Post header with user info */}
         <div className="flex justify-between items-start mb-4">
           <div 
             className={`flex items-center space-x-3 ${userRole === 'client' ? 'cursor-pointer' : ''}`}
@@ -134,8 +136,10 @@ export function PostCard({ post, userRole, isSaved = false, onSave, onCommentCli
           )}
         </div>
         
+        {/* Post content */}
         <p className="mb-4">{post.content}</p>
         
+        {/* Post image */}
         {post.image && (
           <div className="relative rounded-md overflow-hidden mb-4">
             <img
@@ -146,6 +150,7 @@ export function PostCard({ post, userRole, isSaved = false, onSave, onCommentCli
           </div>
         )}
         
+        {/* Post stats */}
         <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
           <div>
             <span>{likeCount} curtidas</span>
@@ -156,6 +161,7 @@ export function PostCard({ post, userRole, isSaved = false, onSave, onCommentCli
         </div>
       </CardContent>
       
+      {/* Post actions */}
       <CardFooter className="border-t pt-3 flex justify-between">
         <Button 
           variant="ghost" 
@@ -184,7 +190,7 @@ export function PostCard({ post, userRole, isSaved = false, onSave, onCommentCli
         <Button 
           variant="ghost" 
           size="sm"
-          onClick={() => onSave && onSave(post)}
+          onClick={onSave}
           className={isSaved ? "text-yellow-500" : ""}
         >
           <Bookmark className={`h-5 w-5 mr-1 ${isSaved ? "fill-current text-yellow-500" : ""}`} />
@@ -192,6 +198,7 @@ export function PostCard({ post, userRole, isSaved = false, onSave, onCommentCli
         </Button>
       </CardFooter>
 
+      {/* Comments dialog */}
       <CustomDialog
         open={isCommentsOpen}
         onOpenChange={setIsCommentsOpen}
