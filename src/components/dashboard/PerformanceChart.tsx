@@ -2,10 +2,11 @@
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { TrendingUp } from "lucide-react";
 
-// Sample data for the chart
+// Sample data for the chart - in a real app, this would come from an API
 const monthlyData = [
   { name: "Jan", agendamentos: 65, faturamento: 3200, clientes: 12 },
   { name: "Fev", agendamentos: 59, faturamento: 2900, clientes: 10 },
@@ -36,53 +37,64 @@ const dailyData = [
 ];
 
 type ChartPeriod = "day" | "week" | "month";
+type MetricType = "agendamentos" | "faturamento" | "clientes";
 
 export function PerformanceChart() {
   const [period, setPeriod] = useState<ChartPeriod>("month");
+  const [selectedMetric, setSelectedMetric] = useState<MetricType>("agendamentos");
   
   const data = 
     period === "day" ? dailyData :
     period === "week" ? weeklyData :
     monthlyData;
-  
-  const getGrowthPercentage = (metric: string): number => {
-    if (period === "month") {
-      const currentValue = monthlyData[monthlyData.length - 1][metric as keyof typeof monthlyData[0]];
-      const previousValue = monthlyData[monthlyData.length - 2][metric as keyof typeof monthlyData[0]];
-      
-      if (typeof currentValue === 'number' && typeof previousValue === 'number') {
-        return Math.round(((currentValue - previousValue) / previousValue) * 100);
-      }
-    } else if (period === "week") {
-      const currentWeekTotal = weeklyData.reduce((sum, day) => sum + (day[metric as keyof typeof weeklyData[0]] as number), 0);
-      const previousWeekEstimate = currentWeekTotal * 0.9; // Simulate previous week data
-      
-      return Math.round(((currentWeekTotal - previousWeekEstimate) / previousWeekEstimate) * 100);
-    } else {
-      const currentDayTotal = dailyData.reduce((sum, hour) => sum + (hour[metric as keyof typeof dailyData[0]] as number), 0);
-      const previousDayEstimate = currentDayTotal * 0.85; // Simulate previous day data
-      
-      return Math.round(((currentDayTotal - previousDayEstimate) / previousDayEstimate) * 100);
-    }
+
+  const getGrowthPercentage = (): number => {
+    const currentData = data;
+    const currentTotal = currentData.reduce((sum, item) => sum + item[selectedMetric], 0);
+    const previousTotal = currentTotal * 0.9; // Simulando dados anteriores
     
-    return 0;
+    return Math.round(((currentTotal - previousTotal) / previousTotal) * 100);
+  };
+
+  const metricLabels = {
+    agendamentos: "Agendamentos",
+    faturamento: "Faturamento (R$)",
+    clientes: "Novos Clientes"
+  };
+
+  const metricColors = {
+    agendamentos: "#6366f1",
+    faturamento: "#06b6d4",
+    clientes: "#f97316"
   };
 
   return (
     <Card>
       <CardHeader className="pb-2">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col space-y-2 md:flex-row md:justify-between md:items-center md:space-y-0">
           <div>
             <CardTitle className="text-lg">Análise de Desempenho</CardTitle>
             <CardDescription>Visualize o crescimento do seu negócio</CardDescription>
           </div>
-          <Tabs defaultValue={period} onValueChange={(value) => setPeriod(value as ChartPeriod)}>
-            <TabsList>
-              <TabsTrigger value="day">Dia</TabsTrigger>
-              <TabsTrigger value="week">Semana</TabsTrigger>
-              <TabsTrigger value="month">Mês</TabsTrigger>
-            </TabsList>
-          </Tabs>
+          <div className="flex flex-col space-y-2 sm:flex-row sm:space-x-2 sm:space-y-0">
+            <Select value={selectedMetric} onValueChange={(value) => setSelectedMetric(value as MetricType)}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Selecione a métrica" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="agendamentos">Agendamentos</SelectItem>
+                <SelectItem value="faturamento">Faturamento</SelectItem>
+                <SelectItem value="clientes">Novos Clientes</SelectItem>
+              </SelectContent>
+            </Select>
+            <Tabs value={period} onValueChange={(value) => setPeriod(value as ChartPeriod)} className="w-fit">
+              <TabsList>
+                <TabsTrigger value="day">Dia</TabsTrigger>
+                <TabsTrigger value="week">Semana</TabsTrigger>
+                <TabsTrigger value="month">Mês</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
@@ -94,31 +106,38 @@ export function PerformanceChart() {
                 <XAxis dataKey="name" />
                 <YAxis />
                 <Tooltip />
-                <Legend />
-                <Line type="monotone" dataKey="agendamentos" stroke="#6366f1" activeDot={{ r: 8 }} name="Agendamentos" />
-                <Line type="monotone" dataKey="faturamento" stroke="#06b6d4" name="Faturamento (R$)" />
-                <Line type="monotone" dataKey="clientes" stroke="#f97316" name="Novos Clientes" />
+                <Line 
+                  type="monotone" 
+                  dataKey={selectedMetric}
+                  stroke={metricColors[selectedMetric]}
+                  name={metricLabels[selectedMetric]}
+                  strokeWidth={2}
+                  dot={{ r: 4 }}
+                  activeDot={{ r: 6 }}
+                />
               </LineChart>
             </ResponsiveContainer>
           ) : (
             <div className="h-full flex items-center justify-center bg-gray-100 rounded-md">
               <TrendingUp className="h-8 w-8 text-muted-foreground" />
-              <span className="ml-2 text-muted-foreground">Gráfico de desempenho</span>
+              <span className="ml-2 text-muted-foreground">Sem dados disponíveis</span>
             </div>
           )}
         </div>
-        <div className="grid grid-cols-3 gap-4 mt-4">
-          <div className="bg-green-50 p-3 rounded-md">
-            <p className="text-sm text-green-600 font-medium">Agendamentos</p>
-            <p className="text-lg font-bold">+{getGrowthPercentage('agendamentos')}%</p>
-          </div>
-          <div className="bg-blue-50 p-3 rounded-md">
-            <p className="text-sm text-blue-600 font-medium">Faturamento</p>
-            <p className="text-lg font-bold">+{getGrowthPercentage('faturamento')}%</p>
-          </div>
-          <div className="bg-purple-50 p-3 rounded-md">
-            <p className="text-sm text-purple-600 font-medium">Novos clientes</p>
-            <p className="text-lg font-bold">+{getGrowthPercentage('clientes')}%</p>
+        <div className="mt-4">
+          <div className={`p-3 rounded-md ${
+            selectedMetric === "agendamentos" ? "bg-indigo-50" :
+            selectedMetric === "faturamento" ? "bg-cyan-50" :
+            "bg-orange-50"
+          }`}>
+            <p className={`text-sm font-medium ${
+              selectedMetric === "agendamentos" ? "text-indigo-600" :
+              selectedMetric === "faturamento" ? "text-cyan-600" :
+              "text-orange-600"
+            }`}>
+              {metricLabels[selectedMetric]}
+            </p>
+            <p className="text-lg font-bold">+{getGrowthPercentage()}%</p>
           </div>
         </div>
       </CardContent>
