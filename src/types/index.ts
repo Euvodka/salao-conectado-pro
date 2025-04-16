@@ -12,6 +12,7 @@ export interface User {
   cpf?: string;
   cnpj?: string;
   address?: Address;
+  services?: Service[]; // Add services to base User type to avoid type errors
 }
 
 export interface Professional extends User {

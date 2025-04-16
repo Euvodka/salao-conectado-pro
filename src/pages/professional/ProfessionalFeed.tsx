@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Camera, Image, Loader2, MessageSquare, X } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { Post } from "@/types";
+import { Post, Service } from "@/types";
 import { useToast } from "@/components/ui/use-toast";
 
 const sampleComments = [
@@ -175,7 +175,7 @@ export default function ProfessionalFeed() {
       
       await new Promise(resolve => setTimeout(resolve, 1500));
       
-      const linkedService = user?.services?.find(s => s.id === newPost.linkedServiceId);
+      const linkedService = user?.services?.find(s => s.id === newPost.linkedServiceId) || undefined;
       
       const newPostObject: PostWithComments = {
         id: `new-${Date.now()}`,
@@ -360,11 +360,15 @@ export default function ProfessionalFeed() {
                     className="w-full px-3 py-2 border rounded-md"
                   >
                     <option value="">Selecione um serviço</option>
-                    {user?.services?.map(service => (
-                      <option key={service.id} value={service.id}>
-                        {service.name}
-                      </option>
-                    ))}
+                    {user?.services && user.services.length > 0 ? (
+                      user.services.map(service => (
+                        <option key={service.id} value={service.id}>
+                          {service.name}
+                        </option>
+                      ))
+                    ) : (
+                      <option disabled>Nenhum serviço cadastrado</option>
+                    )}
                   </select>
                 </div>
 
