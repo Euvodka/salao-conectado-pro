@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { PostCard } from "@/components/feed/PostCard";
 import { ClientNavbar } from "@/components/client/ClientNavbar";
@@ -84,7 +83,7 @@ export default function ClientFeed() {
       // If not saved, add it
       newSavedPosts.push(post);
       toast({
-        title: "Post salvo",
+        title: "Post guardado",
         description: "O post foi adicionado à sua lista de salvos"
       });
     }

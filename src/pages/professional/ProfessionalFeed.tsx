@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { ProfessionalNavbar } from "@/components/professional/ProfessionalNavbar";
 import { PostCard } from "@/components/feed/PostCard";
@@ -14,7 +13,6 @@ import { useAuth } from "@/context/AuthContext";
 import { Post } from "@/types";
 import { useToast } from "@/components/ui/use-toast";
 
-// Sample comments for posts
 const sampleComments = [
   {
     id: "c1",
@@ -36,7 +34,6 @@ const sampleComments = [
   }
 ];
 
-// Mock data for posts
 const MOCK_POSTS: Post[] = [
   {
     id: "1",
@@ -101,17 +98,15 @@ export default function ProfessionalFeed() {
     imageUrl: "",
     imageFile: null as File | null,
     imagePreview: null as string | null,
+    linkedServiceId: "" as string | null,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    // Simulate API fetch
     const fetchPosts = async () => {
       try {
-        // In a real app, this would be an API call
         await new Promise(resolve => setTimeout(resolve, 1000));
         
-        // Add sample comments to the posts
         const postsWithComments = MOCK_POSTS.map(post => ({
           ...post,
           commentList: post.id === "1" ? sampleComments : [],
@@ -157,6 +152,14 @@ export default function ProfessionalFeed() {
     }
   };
 
+  const handleServiceSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const serviceId = e.target.value;
+    setNewPost(prev => ({
+      ...prev,
+      linkedServiceId: serviceId === "" ? null : serviceId
+    }));
+  };
+
   const handleSubmit = async () => {
     if (!newPost.content.trim()) {
       toast({
@@ -170,10 +173,10 @@ export default function ProfessionalFeed() {
     try {
       setIsSubmitting(true);
       
-      // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 1500));
       
-      // Create a new post
+      const linkedService = user?.services?.find(s => s.id === newPost.linkedServiceId);
+      
       const newPostObject: PostWithComments = {
         id: `new-${Date.now()}`,
         professionalId: user?.id || "1",
@@ -181,21 +184,21 @@ export default function ProfessionalFeed() {
         professionalImage: user?.profileImage || "",
         content: newPost.content,
         image: newPost.imagePreview || newPost.imageUrl || "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?q=80&w=1470&auto=format&fit=crop",
+        linkedService: linkedService,
         likes: 0,
         comments: 0,
         createdAt: new Date().toISOString(),
         commentList: [],
       };
       
-      // Add to the beginning of the posts array
       setPosts(prev => [newPostObject, ...prev]);
       
-      // Reset form and close dialog
       setNewPost({
         content: "",
         imageUrl: "",
         imageFile: null,
         imagePreview: null,
+        linkedServiceId: null,
       });
       setIsOpen(false);
       
@@ -274,7 +277,6 @@ export default function ProfessionalFeed() {
       <ProfessionalNavbar />
       
       <main className="container max-w-2xl mx-auto px-4 pt-4 pb-20 md:pt-6">
-        {/* Tabs for navigation */}
         <div className="flex border-b mb-6">
           <button
             className={`py-2 px-4 font-medium ${
@@ -298,7 +300,6 @@ export default function ProfessionalFeed() {
           </button>
         </div>
         
-        {/* Create post card */}
         <Card className="mb-6">
           <CardContent className="pt-6">
             <CustomDialog
@@ -348,7 +349,25 @@ export default function ProfessionalFeed() {
                     required
                   />
                 </div>
-                
+
+                <div className="space-y-2">
+                  <Label htmlFor="linkedService">Vincular serviço (opcional)</Label>
+                  <select
+                    id="linkedService"
+                    name="linkedService"
+                    value={newPost.linkedServiceId || ""}
+                    onChange={handleServiceSelect}
+                    className="w-full px-3 py-2 border rounded-md"
+                  >
+                    <option value="">Selecione um serviço</option>
+                    {user?.services?.map(service => (
+                      <option key={service.id} value={service.id}>
+                        {service.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
                 {!newPost.imagePreview && (
                   <div className="space-y-2">
                     <Label htmlFor="imageUrl">URL da imagem</Label>
@@ -407,7 +426,6 @@ export default function ProfessionalFeed() {
           </CardContent>
         </Card>
 
-        {/* Comments modal */}
         {selectedPost && (
           <CustomDialog
             open={!!selectedPost}
@@ -423,10 +441,8 @@ export default function ProfessionalFeed() {
           </CustomDialog>
         )}
 
-        {/* Content feed */}
         <div>
           {isLoading ? (
-            // Loading skeleton
             <div className="space-y-4">
               {Array.from({ length: 3 }).map((_, i) => (
                 <div key={i} className="bg-white rounded-lg shadow p-4 animate-pulse">

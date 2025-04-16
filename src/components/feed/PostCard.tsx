@@ -1,14 +1,14 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Heart, MessageSquare, Share2, Bookmark, Pencil, Trash2 } from "lucide-react";
+import { Heart, MessageCircle, Bookmark, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { CommentSection } from "./CommentSection";
+import { ServiceCard } from "./ServiceCard";
 import { Post } from "@/types";
 import { CustomDialog } from "@/components/ui/custom-dialog";
 
@@ -16,7 +16,7 @@ interface PostCardProps {
   post: Post;
   userRole: 'client' | 'professional';
   isSaved?: boolean;
-  onSave?: () => void;
+  onSave?: (post: Post) => void;
   onCommentClick?: () => void;
 }
 
@@ -27,6 +27,7 @@ export function PostCard({ post, userRole, isSaved = false, onSave, onCommentCli
   const [likeCount, setLikeCount] = useState(post.likes);
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
+  const [showServiceDetails, setShowServiceDetails] = useState(false);
 
   const formattedDate = () => {
     try {
@@ -46,13 +47,6 @@ export function PostCard({ post, userRole, isSaved = false, onSave, onCommentCli
       setLikeCount(likeCount + 1);
     }
     setLiked(!liked);
-  };
-
-  const handleShare = () => {
-    toast({
-      title: "Compartilhar",
-      description: "Link copiado para a área de transferência!",
-    });
   };
 
   const handleProfessionalClick = () => {
@@ -119,14 +113,14 @@ export function PostCard({ post, userRole, isSaved = false, onSave, onCommentCli
                       className="flex items-center w-full px-4 py-2 text-sm hover:bg-gray-100"
                       onClick={handleEditPost}
                     >
-                      <Pencil className="h-4 w-4 mr-2" />
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-pencil"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
                       Editar publicação
                     </button>
                     <button 
                       className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
                       onClick={handleDeletePost}
                     >
-                      <Trash2 className="h-4 w-4 mr-2" />
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-trash-2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
                       Excluir publicação
                     </button>
                   </div>
@@ -149,11 +143,21 @@ export function PostCard({ post, userRole, isSaved = false, onSave, onCommentCli
             />
           </div>
         )}
+
+        {/* Linked Service Card */}
+        {post.linkedService && (
+          <div className="mt-4 mb-4">
+            <ServiceCard 
+              service={post.linkedService}
+              isProfessionalView={false}
+            />
+          </div>
+        )}
         
         {/* Post stats */}
         <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
           <div>
-            <span>{likeCount} curtidas</span>
+            <span>{likeCount} apreciações</span>
           </div>
           <div>
             <span>{post.comments} comentários</span>
@@ -167,10 +171,10 @@ export function PostCard({ post, userRole, isSaved = false, onSave, onCommentCli
           variant="ghost" 
           size="sm" 
           onClick={handleLike}
-          className={liked ? "text-red-500" : ""}
+          className={liked ? "text-rose-500" : ""}
         >
-          <Heart className={`h-5 w-5 mr-1 ${liked ? "fill-current text-red-500" : ""}`} />
-          Curtir
+          <Heart className={`h-5 w-5 mr-1 ${liked ? "fill-current text-rose-500" : ""}`} />
+          Apreciar
         </Button>
         
         <Button 
@@ -178,23 +182,29 @@ export function PostCard({ post, userRole, isSaved = false, onSave, onCommentCli
           size="sm"
           onClick={onCommentClick || (() => setIsCommentsOpen(true))}
         >
-          <MessageSquare className="h-5 w-5 mr-1" />
+          <MessageCircle className="h-5 w-5 mr-1" />
           Comentar
         </Button>
         
-        <Button variant="ghost" size="sm" onClick={handleShare}>
-          <Share2 className="h-5 w-5 mr-1" />
-          Compartilhar
-        </Button>
+        {post.linkedService && (
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => setShowServiceDetails(true)}
+          >
+            <Sparkles className="h-5 w-5 mr-1" />
+            Ver serviço
+          </Button>
+        )}
         
         <Button 
           variant="ghost" 
           size="sm"
-          onClick={onSave}
-          className={isSaved ? "text-yellow-500" : ""}
+          onClick={() => onSave && onSave(post)}
+          className={isSaved ? "text-amber-500" : ""}
         >
-          <Bookmark className={`h-5 w-5 mr-1 ${isSaved ? "fill-current text-yellow-500" : ""}`} />
-          Salvar
+          <Bookmark className={`h-5 w-5 mr-1 ${isSaved ? "fill-current text-amber-500" : ""}`} />
+          Guardar
         </Button>
       </CardFooter>
 
@@ -211,6 +221,21 @@ export function PostCard({ post, userRole, isSaved = false, onSave, onCommentCli
           onClose={() => setIsCommentsOpen(false)}
         />
       </CustomDialog>
+
+      {/* Service details dialog */}
+      {post.linkedService && (
+        <CustomDialog
+          open={showServiceDetails}
+          onOpenChange={setShowServiceDetails}
+          title={post.linkedService.name}
+          description="Detalhes do serviço"
+        >
+          <ServiceCard 
+            service={post.linkedService}
+            isProfessionalView={false}
+          />
+        </CustomDialog>
+      )}
     </Card>
   );
 }

@@ -56,6 +56,7 @@ export interface Post {
   professionalImage?: string;
   content: string;
   image: string;
+  linkedService?: Service;
   likes: number;
   comments: number;
   createdAt: string;
